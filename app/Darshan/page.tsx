@@ -1,457 +1,655 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaArrowLeft, FaArrowRight, FaTimes, FaExpand, FaSearch } from "react-icons/fa";
 
-/* ── Scroll reveal hook ── */
-function useInView(threshold = 0.12) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, visible };
-}
+// ── Types ──────────────────────────────────────────────────────────────────
+type Category = "all" | "deities" | "festivals" | "temple" | "kirtan" | "prasadam";
 
-interface RevealProps {
-  children: React.ReactNode;
-  delay?: number;
-}
-
-function Reveal({ children, delay = 0 }: RevealProps) {
-  const { ref, visible } = useInView();
-  return (
-    <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity 0.75s ease ${delay}ms, transform 0.75s ease ${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/* ── Types ── */
-interface GalleryImage {
+interface GalleryItem {
+  id: number;
   src: string;
+  alt: string;
+  category: Exclude<Category, "all">;
   title: string;
-  caption: string;
-  category: "deity" | "temple" | "festival" | "prasad";
+  subtitle: string;
+  description: string;
+  featured?: boolean;
+  span?: "wide" | "tall" | "large";
 }
 
-/* ── Image data — replace src with your actual image paths ── */
-const allImages: GalleryImage[] = [
-  { src: "/darshan/radha-madanmohan-1.jpg",  title: "Rādhā Madana Mohana",        caption: "Morning Śṛṅgāra darśana",         category: "deity"   },
-  { src: "/darshan/radha-madanmohan-2.jpg",  title: "Rādhā Madana Mohana",        caption: "Rāja Bhoga ārati",                category: "deity"   },
-  { src: "/darshan/temple-exterior.jpg",     title: "Temple Exterior",            caption: "ISKCON Durgapur",                 category: "temple"  },
-  { src: "/darshan/temple-hall.jpg",         title: "Temple Hall",                caption: "Evening kīrtan in the main hall", category: "temple"  },
-  { src: "/darshan/janmashtami.jpg",         title: "Janmāṣṭamī",                 caption: "Annual festival celebration",     category: "festival"},
-  { src: "/darshan/rathayatra.jpg",          title: "Ratha Yātrā",                caption: "Lord Jagannātha's chariot",       category: "festival"},
-  { src: "/darshan/gaura-purnima.jpg",       title: "Gaura Pūrṇimā",              caption: "Appearance day of Śrī Chaitanya", category: "festival"},
-  { src: "/darshan/prasad-seva.jpg",         title: "Prasādam Seva",              caption: "Daily free meal distribution",    category: "prasad"  },
-  { src: "/darshan/mangala-arati.jpg",       title: "Maṅgala Ārati",              caption: "4:30 AM pre-dawn worship",        category: "deity"   },
-  { src: "/darshan/kirtan.jpg",              title: "Saṅkīrtana",                 caption: "Congregational chanting",         category: "temple"  },
-  { src: "/darshan/deity-closeup.jpg",       title: "Deity Darśana",              caption: "Close darśana of the lotus feet", category: "deity"   },
-  { src: "/darshan/nityananda-trayodasi.jpg",title: "Nityānanda Trayodaśī",       caption: "Festival of Lord Nityānanda",     category: "festival"},
+// ── Gallery Data ────────────────────────────────────────────────────────────
+const GALLERY_ITEMS: GalleryItem[] = [
+  {
+    id: 1,
+    src: "/gallery/radha-madanmohan-altar.jpg",
+    alt: "Shri Shri Radha Madanmohan on the altar",
+    category: "deities",
+    title: "Shri Shri Radha Madanmohan",
+    subtitle: "Main Altar · ISKCON Durgapur",
+    description:
+      "The resplendent altar of Shri Shri Radha Madanmohan — adorned in seasonal garments and fresh flower ornaments, radiating divine grace upon every devotee who seeks shelter.",
+    featured: true,
+    span: "large",
+  },
+  {
+    id: 2,
+    src: "/gallery/mangal-arati.jpg",
+    alt: "Mangal Arati ceremony",
+    category: "deities",
+    title: "Mangal Ārati",
+    subtitle: "4:30 AM · Daily Ceremony",
+    description:
+      "The sacred morning ārati that begins before dawn — lamps are offered to the Lord while devotees sing the Gurvashtakam in the stillness of the early hours.",
+    span: "tall",
+  },
+  {
+    id: 3,
+    src: "/gallery/janmashtami.jpg",
+    alt: "Janmashtami celebration",
+    category: "festivals",
+    title: "Janmashtami",
+    subtitle: "Appearance of Lord Krishna",
+    description:
+      "The grand celebration of Lord Sri Krishna's divine appearance — the temple fills with thousands of devotees, midnight abhishek, and joyous kirtan.",
+  },
+  {
+    id: 4,
+    src: "/gallery/temple-exterior.jpg",
+    alt: "ISKCON Durgapur temple exterior",
+    category: "temple",
+    title: "Temple Façade",
+    subtitle: "ISKCON Durgapur",
+    description:
+      "The magnificent entrance of ISKCON Durgapur — where the spiritual journey begins the moment one crosses the threshold.",
+  },
+  {
+    id: 5,
+    src: "/gallery/holi-festival.jpg",
+    alt: "Holi festival celebrations",
+    category: "festivals",
+    title: "Gaura Purnima Holi",
+    subtitle: "Festival of Colours",
+    description:
+      "Devotees celebrate the appearance of Shri Chaitanya Mahaprabhu with ecstatic kirtan and the vibrant colours of Holi.",
+    span: "wide",
+  },
+  {
+    id: 6,
+    src: "/gallery/kirtan-hall.jpg",
+    alt: "Kirtan in the main hall",
+    category: "kirtan",
+    title: "Hare Krishna Mahā-Kirtan",
+    subtitle: "Sunday Love Feast",
+    description:
+      "The congregation erupts in transcendental song — mridangas and kartals resonate through the hall as devotees dance in divine ecstasy.",
+  },
+  {
+    id: 7,
+    src: "/gallery/prasadam-hall.jpg",
+    alt: "Prasadam distribution",
+    category: "prasadam",
+    title: "Mahā-Prasādam",
+    subtitle: "Sacred Food Distribution",
+    description:
+      "The sanctified remnants of the Lord's meal are lovingly prepared and distributed daily — touching thousands of lives with spiritual nourishment.",
+  },
+  {
+    id: 8,
+    src: "/gallery/deity-decoration.jpg",
+    alt: "Deity decoration with flowers",
+    category: "deities",
+    title: "Pushpa Shringar",
+    subtitle: "Flower Decoration",
+    description:
+      "Skilled pujaris craft intricate floral garlands and ornaments, dressing the Divine Couple in breathtaking splendour each day.",
+  },
+  {
+    id: 9,
+    src: "/gallery/ratha-yatra.jpg",
+    alt: "Ratha Yatra procession",
+    category: "festivals",
+    title: "Ratha Yātrā",
+    subtitle: "Festival of the Chariots",
+    description:
+      "The colossal chariot of Lord Jagannath rolls through the streets of Durgapur as thousands pull the ropes in devotional fervour.",
+    span: "tall",
+  },
+  {
+    id: 10,
+    src: "/gallery/temple-hall.jpg",
+    alt: "Main temple hall interior",
+    category: "temple",
+    title: "Main Sabhā Hall",
+    subtitle: "Temple Interior",
+    description:
+      "The grand pillared hall where daily classes, festivals, and satsangs are held — a sanctuary of peace and transcendental learning.",
+  },
+  {
+    id: 11,
+    src: "/gallery/youth-kirtan.jpg",
+    alt: "Youth kirtan group",
+    category: "kirtan",
+    title: "Yuvā Bhakti Kirtan",
+    subtitle: "Youth Congregation",
+    description:
+      "The next generation of devotees, discovering the bliss of the holy name — hearts alight with the chanting of Hare Krishna.",
+  },
+  {
+    id: 12,
+    src: "/gallery/lamp-arati.jpg",
+    alt: "Evening lamp arati",
+    category: "deities",
+    title: "Sandhyā Ārati",
+    subtitle: "Evening Lamp Offering",
+    description:
+      "As dusk falls, the resplendent evening ārati illuminates the altar — ghee lamps offered in seven auspicious circles to the Divine Couple.",
+    span: "wide",
+  },
 ];
 
-const PREVIEW_COUNT = 5;
+const CATEGORIES: { key: Category; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "deities", label: "Deities" },
+  { key: "festivals", label: "Festivals" },
+  { key: "temple", label: "Temple" },
+  { key: "kirtan", label: "Kirtan" },
+  { key: "prasadam", label: "Prasādam" },
+];
 
-const categoryLabels: Record<GalleryImage["category"], string> = {
-  deity:   "Deity Darśana",
-  temple:  "Temple",
-  festival:"Festivals",
-  prasad:  "Prasādam Seva",
+// ── Span class helper ───────────────────────────────────────────────────────
+const spanClass = (span?: string) => {
+  if (span === "large") return "md:col-span-2 md:row-span-2";
+  if (span === "wide") return "md:col-span-2";
+  if (span === "tall") return "md:row-span-2";
+  return "";
 };
 
-const categories = ["all", "deity", "temple", "festival", "prasad"] as const;
-type Category = typeof categories[number];
+const imageHeightClass = (span?: string) => {
+  if (span === "large") return "h-[480px]";
+  if (span === "tall") return "h-[400px]";
+  return "h-[240px]";
+};
 
-export default function DarshanPage() {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+// ── Main Component ──────────────────────────────────────────────────────────
+const GalleryPage: React.FC = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
   const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const filtered = activeCategory === "all"
-    ? allImages
-    : allImages.filter(img => img.category === activeCategory);
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
-  const previewImages = filtered.slice(0, PREVIEW_COUNT);
-  const displayImages = showAll ? filtered : previewImages;
+  // ── Filtered items ─────────────────────────────────────────────────────
+  const filtered = GALLERY_ITEMS.filter((item) => {
+    const matchCat = activeCategory === "all" || item.category === activeCategory;
+    const matchSearch =
+      !searchQuery ||
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
-  const openLightbox = (index: number) => {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
-    document.body.style.overflow = "hidden";
+  // ── Lightbox navigation ────────────────────────────────────────────────
+  const openLightbox = (id: number) => {
+    const idx = filtered.findIndex((i) => i.id === id);
+    setLightboxIndex(idx);
   };
-
-  const closeLightbox = () => {
-    setLightboxOpen(false);
-    document.body.style.overflow = "";
-  };
-
-  const prev = () => setLightboxIndex(i => (i - 1 + filtered.length) % filtered.length);
-  const next = () => setLightboxIndex(i => (i + 1) % filtered.length);
+  const closeLightbox = () => setLightboxIndex(null);
+  const prev = useCallback(() => {
+    if (lightboxIndex === null) return;
+    setLightboxIndex((lightboxIndex - 1 + filtered.length) % filtered.length);
+  }, [lightboxIndex, filtered.length]);
+  const next = useCallback(() => {
+    if (lightboxIndex === null) return;
+    setLightboxIndex((lightboxIndex + 1) % filtered.length);
+  }, [lightboxIndex, filtered.length]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!lightboxOpen) return;
+      if (lightboxIndex === null) return;
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
       if (e.key === "Escape") closeLightbox();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [lightboxOpen]);
+  }, [lightboxIndex, prev, next]);
+
+  const lightboxItem = lightboxIndex !== null ? filtered[lightboxIndex] : null;
 
   return (
-    <main style={{ background: "#0c0701", color: "#e2c99a", fontFamily: "'EB Garamond', Georgia, serif", minHeight: "100vh" }}>
+    <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500&display=swap');
 
+        .g-shell   { font-family: 'Cormorant Garamond', Georgia, serif; }
         .cinzel    { font-family: 'Cinzel', serif; }
-        .cormorant { font-family: 'Cormorant Garamond', serif; }
+        .cormorant { font-family: 'Cormorant Garamond', Georgia, serif; }
 
-        .gold-text {
-          background: linear-gradient(135deg, #f7e099 0%, #d49132 50%, #f0c564 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        .card-img::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%);
+          pointer-events: none;
+          z-index: 1;
         }
 
-        .divider {
-          display: flex; align-items: center; gap: 14px; justify-content: center;
+        .pill-btn {
+          transition: all 0.2s ease;
         }
-        .divider::before, .divider::after {
-          content: ''; height: 1px; width: 64px;
-          background: linear-gradient(90deg, transparent, #c97c3080);
-        }
-        .divider::after { background: linear-gradient(90deg, #c97c3080, transparent); }
-
-        /* gallery grid */
-        .gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
+        .pill-btn:hover:not(.active) {
+          border-color: #ea580c !important;
+          background: rgba(255,255,255,0.9) !important;
         }
 
-        /* first tile spans 2 columns on wide screens */
-        @media (min-width: 640px) {
-          .gallery-grid .tile-featured {
-            grid-column: span 2;
-            grid-row: span 2;
-          }
+        .gallery-card {
+          transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+        }
+        .gallery-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 24px 48px rgba(234,88,12,0.22);
         }
 
-        .gallery-tile {
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          aspect-ratio: 1 / 1;
-          background: #1a0c04;
-          border: 1px solid #c97c3018;
-          cursor: pointer;
-          transition: border-color 0.3s, transform 0.3s;
-        }
-        .gallery-tile:hover { border-color: #c97c3050; transform: scale(1.01); }
-        .gallery-tile:hover .tile-overlay { opacity: 1; }
-
-        .tile-overlay {
-          position: absolute; inset: 0;
-          background: linear-gradient(to top, #0c0701ee 0%, transparent 55%);
-          opacity: 0;
-          transition: opacity 0.35s;
-          display: flex; flex-direction: column;
-          justify-content: flex-end;
-          padding: 20px;
+        .lb-backdrop {
+          backdrop-filter: blur(4px);
         }
 
-        /* last preview tile — the "view all" cover */
-        .view-all-tile {
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          aspect-ratio: 1 / 1;
-          background: #1a0c04;
-          border: 1px solid #c97c3030;
-          cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          flex-direction: column; gap: 10px;
-          transition: border-color 0.3s, background 0.3s;
-        }
-        .view-all-tile:hover { border-color: #c97c3070; background: #210e02; }
-
-        /* filter pills */
-        .filter-pill {
-          padding: 7px 18px;
-          border-radius: 40px;
-          border: 1px solid #c97c3030;
-          background: transparent;
-          color: #c97c3088;
+        input.search-input {
           font-family: 'Cinzel', serif;
-          font-size: 10px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: all 0.25s;
+          font-size: 11px;
+          letter-spacing: 0.15em;
+          background: rgba(255,255,255,0.8);
+          border: 1px solid rgba(234,88,12,0.25);
+          border-radius: 999px;
+          padding: 8px 18px 8px 38px;
+          outline: none;
+          color: #44403c;
+          width: 220px;
+          transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .filter-pill:hover { border-color: #c97c3060; color: #e8a830; }
-        .filter-pill.active {
-          background: linear-gradient(135deg, #1e1000, #2a1500);
-          border-color: #c97c3060;
-          color: #e8a830;
+        input.search-input:focus {
+          border-color: #ea580c;
+          box-shadow: 0 0 0 3px rgba(234,88,12,0.12);
         }
-
-        /* lightbox */
-        .lightbox-backdrop {
-          position: fixed; inset: 0; z-index: 1000;
-          background: rgba(4, 2, 0, 0.96);
-          display: flex; align-items: center; justify-content: center;
-          padding: 24px;
-        }
-        .lightbox-img-wrap {
-          position: relative;
-          max-width: min(860px, 90vw);
-          max-height: 80vh;
-          width: 100%;
-          border-radius: 16px;
-          overflow: hidden;
-          border: 1px solid #c97c3030;
-        }
-        .lb-btn {
-          position: absolute; top: 50%; transform: translateY(-50%);
-          background: #1a0c04cc; border: 1px solid #c97c3040;
-          color: #e8a830; border-radius: 50%;
-          width: 44px; height: 44px;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; font-size: 18px;
-          transition: background 0.2s, border-color 0.2s;
-          z-index: 10;
-        }
-        .lb-btn:hover { background: #2a1200cc; border-color: #c97c3080; }
-        .lb-close {
-          position: absolute; top: 16px; right: 16px;
-          background: #1a0c04cc; border: 1px solid #c97c3040;
-          color: #e8a830; border-radius: 50%;
-          width: 38px; height: 38px;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; font-size: 16px;
-          transition: background 0.2s;
-          z-index: 10;
-        }
-        .lb-close:hover { background: #2a1200cc; }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0c0701; }
-        ::-webkit-scrollbar-thumb { background: #c97c3055; border-radius: 4px; }
+        input.search-input::placeholder { color: #c2a884; }
       `}</style>
 
-      {/* ══════════════════════════════════════
-          HERO
-      ══════════════════════════════════════ */}
-      <section style={{
-        minHeight: "auto",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        textAlign: "center", padding: "100px 24px 60px",
-        background: "radial-gradient(ellipse at 50% 40%, #2a1200 0%, #0c0701 65%)",
-        borderBottom: "1px solid #c97c3015",
-        position: "relative", overflow: "hidden",
-      }}>
-        {[520, 340].map(size => (
-          <div key={size} style={{
-            position: "absolute", width: size, height: size, borderRadius: "50%",
-            border: `1px solid #c97c30${size === 520 ? "12" : "1a"}`,
-            top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            pointerEvents: "none",
-          }} />
-        ))}
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 680 }}>
-          <p className="cinzel" style={{ color: "#c97c3099", fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 16 }}>
-            Śrī Śrī Rādhā Madana Mohana
-          </p>
-          <h1 className="cinzel gold-text" style={{ fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 600, lineHeight: 1.05, marginBottom: 10 }}>
-            Darśana Gallery
-          </h1>
-          <p className="cinzel" style={{ color: "#9a6e3a", fontSize: "clamp(9px, 1.1vw, 11px)", letterSpacing: "0.22em", marginBottom: 18 }}>
-            ISKCON Durgapur · Hare Krishna Temple
-          </p>
-          <div className="divider" style={{ marginBottom: 16 }}>
-            <span style={{ color: "#c97c3055", fontSize: 10 }}>✦</span>
-          </div>
-          <blockquote className="cormorant" style={{
-            fontSize: "clamp(13px, 1.6vw, 17px)",
-            fontStyle: "italic", color: "#a07840",
-            lineHeight: 1.65, maxWidth: 440, margin: "0 auto",
-          }}>
-            &ldquo;One who sees the Supreme Lord equally present everywhere and in every living being does not degrade himself.&rdquo;
-          </blockquote>
-          <p className="cinzel" style={{ color: "#c97c3055", fontSize: 9, letterSpacing: "0.25em", marginTop: 10 }}>
-            — BHAGAVAD-GĪTĀ 13.29
-          </p>
+      <div
+        className="g-shell relative min-h-screen flex flex-col overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #fff7ed 0%, #fffbeb 50%, #ffedd5 100%)" }}
+      >
+
+        {/* ── Background blobs ── */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" style={{ opacity: 0.16 }}>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl animate-pulse" />
+          <div
+            className="absolute bottom-0 right-0 w-96 h-96 bg-amber-300 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
         </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-          GALLERY
-      ══════════════════════════════════════ */}
-      <section style={{ padding: "72px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        {/* ── Page Header ── */}
+        <div className="relative z-10 text-center px-8 pt-28 pb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-3 mb-4"
+          >
+            <Link
+              href="/"
+              className="cinzel text-[10px] tracking-widest uppercase text-orange-400 hover:text-orange-600 transition-colors flex items-center gap-2"
+            >
+              <FaArrowLeft className="text-[9px]" /> Home
+            </Link>
+            <div className="w-5 h-px bg-orange-300" />
+            <span className="cinzel text-[10px] tracking-widest uppercase text-orange-500">
+              ISKCON Durgapur · Gallery
+            </span>
+          </motion.div>
 
-        {/* heading */}
-        <Reveal>
-          <p className="cinzel" style={{ textAlign: "center", color: "#c97c3070", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>
-            Divine Moments
-          </p>
-          <h2 className="cinzel" style={{ textAlign: "center", fontSize: "clamp(22px, 3.5vw, 34px)", color: "#d4c4a0", marginBottom: 10 }}>
-            Glimpses of <span className="gold-text">Bhakti</span>
-          </h2>
-          <div className="divider" style={{ marginBottom: 36 }}>
-            <span style={{ color: "#c97c3055", fontSize: 12 }}>✦</span>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="cormorant font-light leading-none text-gray-800 mb-2"
+            style={{ fontSize: "clamp(2.6rem, 5vw, 4.5rem)" }}
+          >
+            Divine{" "}
+            <em
+              className="italic"
+              style={{
+                background: "linear-gradient(135deg, #ea580c, #d97706, #ea580c)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Darshan
+            </em>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={isLoaded ? { opacity: 1 } : {}}
+            transition={{ delay: 0.3 }}
+            className="cormorant italic font-light text-xl text-gray-500 max-w-md mx-auto mb-6"
+          >
+            A glimpse into the eternal beauty of Shri Shri Radha Madanmohan's sacred abode
+          </motion.p>
+
+          {/* Decorative rule */}
+          <div className="flex items-center justify-center gap-3">
+            <div
+              className="w-20 h-px"
+              style={{ background: "linear-gradient(90deg, transparent, rgba(234,88,12,0.5))" }}
+            />
+            <div className="w-1.5 h-1.5 rotate-45 bg-orange-500 opacity-60 shrink-0" />
+            <div
+              className="w-20 h-px"
+              style={{ background: "linear-gradient(90deg, rgba(234,88,12,0.5), transparent)" }}
+            />
           </div>
-        </Reveal>
+        </div>
 
-        {/* category filters */}
-        <Reveal delay={60}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 40 }}>
-            {categories.map(cat => (
+        {/* ── Controls bar: filters + search ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.4 }}
+          className="relative z-10 flex flex-wrap items-center justify-between gap-4 px-8 lg:px-16 pb-6"
+        >
+          {/* Category Pills */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => (
               <button
-                key={cat}
-                className={`filter-pill ${activeCategory === cat ? "active" : ""}`}
-                onClick={() => { setActiveCategory(cat); setShowAll(false); }}
+                key={cat.key}
+                onClick={() => setActiveCategory(cat.key)}
+                className="pill-btn cinzel text-[9px] tracking-[0.2em] uppercase px-4 py-2 rounded-full border"
+                style={
+                  activeCategory === cat.key
+                    ? {
+                        background: "linear-gradient(135deg, #ea580c, #d97706)",
+                        color: "#fff",
+                        border: "1px solid transparent",
+                        boxShadow: "0 4px 14px rgba(234,88,12,0.3)",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.65)",
+                        color: "#ea580c",
+                        border: "1px solid rgba(234,88,12,0.28)",
+                      }
+                }
               >
-                {cat === "all" ? "All" : categoryLabels[cat as GalleryImage["category"]]}
+                {cat.label}
               </button>
             ))}
           </div>
-        </Reveal>
 
-        {/* grid */}
-        <div className="gallery-grid">
-          {displayImages.map((img, i) => (
-            <Reveal key={img.src} delay={i * 60}>
-              <div
-                className={`gallery-tile ${i === 0 && !showAll ? "tile-featured" : ""}`}
-                onClick={() => openLightbox(i)}
-              >
-                <Image
-                  src={img.src}
-                  alt={img.title}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-                <div className="tile-overlay">
-                  <p className="cinzel" style={{ color: "#e8a830", fontSize: 11, letterSpacing: "0.12em", marginBottom: 4 }}>{img.title}</p>
-                  <p style={{ color: "#c4a06a", fontSize: 13, fontStyle: "italic" }}>{img.caption}</p>
-                </div>
-                {/* category badge */}
-                <div style={{
-                  position: "absolute", top: 12, left: 12,
-                  background: "#0c070199", border: "1px solid #c97c3030",
-                  borderRadius: 20, padding: "3px 10px",
-                }}>
-                  <p className="cinzel" style={{ color: "#c97c30bb", fontSize: 8, letterSpacing: "0.18em" }}>
-                    {categoryLabels[img.category]}
-                  </p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
+          {/* Search */}
+          <div className="relative flex items-center">
+            <FaSearch
+              className="absolute left-3 text-orange-400 pointer-events-none"
+              style={{ fontSize: "11px" }}
+            />
+            <input
+              className="search-input"
+              type="text"
+              placeholder="Search gallery…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </motion.div>
 
-          {/* View All tile — shown only when not showing all */}
-          {!showAll && filtered.length > PREVIEW_COUNT && (
-            <Reveal delay={PREVIEW_COUNT * 60}>
-              <div className="view-all-tile" onClick={() => setShowAll(true)}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: "50%",
-                  border: "1px solid #c97c3040",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 4,
-                }}>
-                  <span style={{ color: "#e8a830", fontSize: 22 }}>+</span>
-                </div>
-                <p className="cinzel gold-text" style={{ fontSize: 13, letterSpacing: "0.1em" }}>
-                  View All
-                </p>
-                <p style={{ color: "#c97c3077", fontSize: 13, fontStyle: "italic" }}>
-                  {filtered.length - PREVIEW_COUNT} more photos
-                </p>
-              </div>
-            </Reveal>
+        {/* ── Gallery Grid ── */}
+        <div className="relative z-10 flex-1 px-8 lg:px-16 pb-10">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <p className="cormorant italic text-2xl text-orange-400 mb-2">No offerings found</p>
+              <p className="cinzel text-[10px] tracking-widest text-orange-300 uppercase">
+                Try a different category or search term
+              </p>
+            </div>
+          ) : (
+            <motion.div
+              layout
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto"
+            >
+              <AnimatePresence>
+                {filtered.map((item, i) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.88 }}
+                    transition={{ duration: 0.35, delay: i * 0.04 }}
+                    className={`gallery-card relative rounded-2xl overflow-hidden cursor-pointer ${spanClass(item.span)}`}
+                    onClick={() => openLightbox(item.id)}
+                  >
+                    {/* Image */}
+                    <div
+                      className={`card-img relative w-full ${imageHeightClass(item.span)} bg-gradient-to-br from-amber-100 to-orange-200`}
+                    >
+                      <Image
+                        src={item.src}
+                        alt={item.alt}
+                        fill
+                        style={{ objectFit: "cover" }}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+
+                      {/* Category badge */}
+                      <div
+                        className="absolute top-3 left-3 z-10 cinzel text-[7px] tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+                        style={{
+                          background: "rgba(255,255,255,0.18)",
+                          backdropFilter: "blur(8px)",
+                          border: "1px solid rgba(255,255,255,0.3)",
+                          color: "#fff",
+                        }}
+                      >
+                        {item.category}
+                      </div>
+
+                      {/* Expand icon on hover */}
+                      <div
+                        className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100"
+                        style={{
+                          background: "rgba(255,255,255,0.18)",
+                          backdropFilter: "blur(8px)",
+                          border: "1px solid rgba(255,255,255,0.3)",
+                        }}
+                      >
+                        <FaExpand style={{ fontSize: "9px", color: "#fff" }} />
+                      </div>
+
+                      {/* Label overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+                        <p
+                          className="cinzel mb-1"
+                          style={{ fontSize: "7.5px", letterSpacing: "0.22em", color: "rgba(255,220,170,0.85)" }}
+                        >
+                          {item.subtitle}
+                        </p>
+                        <h3
+                          className="cormorant italic font-light text-white leading-snug"
+                          style={{ fontSize: item.span === "large" ? "26px" : "18px" }}
+                        >
+                          {item.title}
+                        </h3>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
 
-        {/* collapse button */}
-        {showAll && (
-          <div style={{ textAlign: "center", marginTop: 40 }}>
-            <button
-              className="filter-pill active"
-              onClick={() => setShowAll(false)}
-              style={{ padding: "10px 28px" }}
+        {/* ── Lightbox ── */}
+        <AnimatePresence>
+          {lightboxItem && (
+            <motion.div
+              key="lightbox"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="lb-backdrop fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: "rgba(20,10,5,0.88)" }}
+              onClick={closeLightbox}
             >
-              Show Less
-            </button>
-          </div>
-        )}
-      </section>
+              <motion.div
+                initial={{ scale: 0.9, y: 24 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.92, y: 16 }}
+                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                className="relative max-w-3xl w-full rounded-3xl overflow-hidden"
+                style={{
+                  background: "linear-gradient(135deg, #fff7ed, #fffbeb)",
+                  border: "1px solid rgba(234,88,12,0.2)",
+                  boxShadow: "0 40px 80px rgba(0,0,0,0.5)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Image */}
+                <div
+                  className="card-img relative w-full bg-gradient-to-br from-amber-100 to-orange-200"
+                  style={{ height: "380px" }}
+                >
+                  <Image
+                    src={lightboxItem.src}
+                    alt={lightboxItem.alt}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    sizes="800px"
+                    priority
+                  />
+                </div>
 
-      {/* ══════════════════════════════════════
-          LIGHTBOX
-      ══════════════════════════════════════ */}
-      {lightboxOpen && (
-        <div className="lightbox-backdrop" onClick={closeLightbox}>
-          <div style={{ position: "relative", width: "100%", maxWidth: "min(860px, 90vw)" }} onClick={e => e.stopPropagation()}>
+                {/* Info */}
+                <div className="p-7">
+                  <p
+                    className="cinzel mb-2"
+                    style={{ fontSize: "8px", letterSpacing: "0.28em", color: "#ea580c" }}
+                  >
+                    {lightboxItem.subtitle}
+                  </p>
+                  <h2
+                    className="cormorant italic font-light text-gray-800 mb-3 leading-none"
+                    style={{ fontSize: "clamp(1.8rem, 3vw, 2.6rem)" }}
+                  >
+                    {lightboxItem.title}
+                  </h2>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className="w-12 h-px"
+                      style={{ background: "linear-gradient(90deg, rgba(234,88,12,0.5), transparent)" }}
+                    />
+                    <div className="w-1 h-1 rotate-45 bg-orange-500 opacity-60 shrink-0" />
+                    <div
+                      className="w-12 h-px"
+                      style={{ background: "linear-gradient(90deg, transparent, rgba(234,88,12,0.5))" }}
+                    />
+                  </div>
+                  <p className="cormorant italic font-light text-gray-500 leading-relaxed" style={{ fontSize: "17px" }}>
+                    {lightboxItem.description}
+                  </p>
+                </div>
 
-            {/* close */}
-            <button className="lb-close" onClick={closeLightbox}>✕</button>
+                {/* Close */}
+                <button
+                  onClick={closeLightbox}
+                  className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center z-10"
+                  style={{
+                    background: "rgba(255,255,255,0.2)",
+                    backdropFilter: "blur(8px)",
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    color: "#fff",
+                  }}
+                >
+                  <FaTimes style={{ fontSize: "13px" }} />
+                </button>
 
-            {/* image */}
-            <div className="lightbox-img-wrap" style={{ aspectRatio: "4/3" }}>
-              <Image
-                src={filtered[lightboxIndex].src}
-                alt={filtered[lightboxIndex].title}
-                fill
-                style={{ objectFit: "contain" }}
-              />
+                {/* Prev / Next */}
+                {filtered.length > 1 && (
+                  <>
+                    <button
+                      onClick={prev}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center z-10"
+                      style={{
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(255,255,255,0.35)",
+                        color: "#fff",
+                      }}
+                    >
+                      <FaArrowLeft style={{ fontSize: "11px" }} />
+                    </button>
+                    <button
+                      onClick={next}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center z-10"
+                      style={{
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(255,255,255,0.35)",
+                        color: "#fff",
+                      }}
+                    >
+                      <FaArrowRight style={{ fontSize: "11px" }} />
+                    </button>
+                  </>
+                )}
+
+                {/* Counter */}
+                <div
+                  className="absolute bottom-4 right-6 cinzel text-gray-400"
+                  style={{ fontSize: "8px", letterSpacing: "0.2em" }}
+                >
+                  {lightboxIndex !== null ? lightboxIndex + 1 : 0} / {filtered.length}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Footer bar ── */}
+        <div
+          className="relative z-10 flex items-center justify-center flex-wrap gap-4 px-8 py-4"
+          style={{
+            borderTop: "1px solid rgba(234,88,12,0.15)",
+            background: "rgba(254,215,170,0.45)",
+          }}
+        >
+          {[
+            "Mangal Arati · 4:30 AM",
+            "Hare Krishna Kirtan",
+            "Prasadam Daily",
+            "Bhagavad Gita Classes",
+            "Spiritual Counselling",
+          ].map((text, i) => (
+            <div key={i} style={{ display: "contents" }}>
+              {i > 0 && <div className="w-px h-3.5 hidden sm:block bg-orange-300" />}
+              <div className="flex items-center gap-2 cinzel text-[8px] tracking-[0.2em] uppercase text-orange-500">
+                <div className="w-1 h-1 rounded-full shrink-0 bg-orange-400" />
+                {text}
+              </div>
             </div>
-
-            {/* prev / next */}
-            <button className="lb-btn" style={{ left: -22 }} onClick={prev}>‹</button>
-            <button className="lb-btn" style={{ right: -22 }} onClick={next}>›</button>
-
-            {/* caption */}
-            <div style={{ textAlign: "center", marginTop: 18 }}>
-              <p className="cinzel" style={{ color: "#e8a830", fontSize: 13, letterSpacing: "0.1em", marginBottom: 4 }}>
-                {filtered[lightboxIndex].title}
-              </p>
-              <p style={{ color: "#c4a06a", fontSize: 15, fontStyle: "italic" }}>
-                {filtered[lightboxIndex].caption}
-              </p>
-              <p className="cinzel" style={{ color: "#c97c3055", fontSize: 9, letterSpacing: "0.2em", marginTop: 8 }}>
-                {lightboxIndex + 1} / {filtered.length}
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
-      )}
 
-      {/* ══════════════════════════════════════
-          FOOTER NOTE
-      ══════════════════════════════════════ */}
-      <div style={{ textAlign: "center", padding: "28px 24px", borderTop: "1px solid #c97c3012", marginTop: 40 }}>
-        <p className="cinzel" style={{ color: "#c97c3035", fontSize: 10, letterSpacing: "0.22em" }}>
-          Hare Krishna · Hare Krishna · Krishna Krishna · Hare Hare · Hare Rāma · Hare Rāma · Rāma Rāma · Hare Hare
-        </p>
       </div>
-    </main>
+    </>
   );
-}
+};
+
+export default GalleryPage;
