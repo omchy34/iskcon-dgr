@@ -1,16 +1,20 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 /* ── Scroll reveal hook ── */
-function useInView(threshold = 0.12) {
+function useInView(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([e]) => {
+        if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+      },
       { threshold }
     );
     obs.observe(el);
@@ -19,22 +23,31 @@ function useInView(threshold = 0.12) {
   return { ref, visible };
 }
 
-interface RevealProps {
+function Reveal({
+  children,
+  delay = 0,
+  direction = "up",
+  className = "",
+}: {
   children: React.ReactNode;
   delay?: number;
+  direction?: "up" | "left" | "right";
   className?: string;
-}
-
-function Reveal({ children, delay = 0, className = "" }: RevealProps) {
+}) {
   const { ref, visible } = useInView();
+  const transform = {
+    up:    visible ? "translateY(0)"  : "translateY(32px)",
+    left:  visible ? "translateX(0)"  : "translateX(-32px)",
+    right: visible ? "translateX(0)"  : "translateX(32px)",
+  }[direction];
   return (
     <div
       ref={ref}
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity 0.75s ease ${delay}ms, transform 0.75s ease ${delay}ms`,
+        transform,
+        transition: `opacity 0.8s ease ${delay}ms, transform 0.8s ease ${delay}ms`,
       }}
     >
       {children}
@@ -42,187 +55,321 @@ function Reveal({ children, delay = 0, className = "" }: RevealProps) {
   );
 }
 
-interface ScheduleItem { time: string; name: string; desc: string; }
-
-const schedule: ScheduleItem[] = [
-  { time: "4:30 AM", name: "Maṅgala Ārati", desc: "The day begins in the pre-dawn stillness with the most auspicious ārati of the day, offered to the Deities as they are awakened." },
-  { time: "7:15 AM", name: "Śṛṅgāra Darśana", desc: "The Deities are beautifully dressed for the day and revealed to the congregation for morning darśana." },
-  { time: "7:30 AM", name: "Guru Pūjā & Kīrtan", desc: "Devotees offer worship to Śrīla Prabhupāda followed by congregational chanting of the holy names." },
-  { time: "8:00 AM", name: "Śrīmad-Bhāgavatam", desc: "A daily class on the Śrīmad-Bhāgavatam — open to all — drawing timeless wisdom from the crown jewel of Vedic literature." },
-  { time: "12:00 PM", name: "Rāja Bhoga Ārati", desc: "The midday offering of a royal feast is presented to the Deities, followed by prasādam distribution." },
-  { time: "4:00 PM", name: "Ușṭhāpana Ārati", desc: "The Deities are awakened from their afternoon rest with a gentle ārati and kīrtan." },
-  { time: "6:45 PM", name: "Sandhyā Ārati", desc: "The beautiful evening ārati — lamps, incense, conches and bells fill the temple with devotion as the sun sets." },
-  { time: "8:00 PM", name: "Śayana Ārati", desc: "The final ārati of the day, as the Deities are lovingly put to rest for the night." },
+const localFeatures = [
+  { icon: "🔔", label: "Daily Ārati" },
+  { icon: "🙏", label: "Open to All" },
+  { icon: "🍛", label: "Prasad Seva" },
+  { icon: "📖", label: "Bhāgavatam Class" },
+  { icon: "🎵", label: "Kīrtan" },
+  { icon: "💬", label: "Counselling" },
 ];
 
-const localFeatures: string[] = ["Daily Ārati", "Open to All", "Prasad Seva", "Bhāgavatam Class", "Kīrtan", "Counselling"];
-
-const deityFacts: { label: string; value: string }[] = [
-  { label: "Presiding Deities", value: "Śrī Śrī Rādhā Madana Mohana" },
-  { label: "Deity Style", value: "Traditional Vaiṣṇava — Gauḍīya paramparā" },
-  { label: "Significance", value: "Madana Mohana is the form of Krishna who enchants even Cupid — the attractor of all hearts" },
-  { label: "Deity Dress", value: "Changed daily; elaborate during Ekādaśī & festivals" },
+const timeline = [
+  {
+    year: "Early Days",
+    event:
+      "A small group of devotees in Durgapur began gathering for kīrtan and Bhāgavatam study, planting the first seeds of an organised spiritual community in the steel city.",
+  },
+  {
+    year: "Establishment",
+    event:
+      "ISKCON Durgapur was formally established under ISKCON guidance. The installation of Śrī Śrī Rādhā Madana Mohana marked the official beginning of daily Deity worship.",
+  },
+  {
+    year: "Growth",
+    event:
+      "The congregation steadily grew — programmes expanded, prasādam distribution began reaching the wider community, and the temple became a landmark of spiritual culture in the region.",
+  },
+  {
+    year: "Today",
+    event:
+      "The temple now hosts hundreds of devotees daily, runs ongoing outreach programmes, and continues to grow as a beacon of bhakti for the Durgapur–Asansol belt.",
+  },
 ];
 
-export default function ISKCONDurgapurPage() {
+const deityFacts = [
+  { label: "Presiding Deities",  value: "Śrī Śrī Rādhā Madana Mohana" },
+  { label: "Tradition",          value: "Gauḍīya Vaiṣṇava paramparā" },
+  { label: "Significance",       value: "Madana Mohana — He who enchants even the enchanter of minds" },
+  { label: "Deity Dress",        value: "Changed daily; elaborate during Ekādaśī & festivals" },
+];
+
+const schedule = [
+  { time: "4:30 AM",  name: "Maṅgala Ārati",       icon: "🌅" },
+  { time: "7:15 AM",  name: "Śṛṅgāra Darśana",     icon: "✨" },
+  { time: "7:30 AM",  name: "Guru Pūjā & Kīrtan",  icon: "🎵" },
+  { time: "8:00 AM",  name: "Śrīmad-Bhāgavatam",   icon: "📖" },
+  { time: "12:00 PM", name: "Rāja Bhoga Ārati",     icon: "🍛" },
+  { time: "4:00 PM",  name: "Uṣṭhāpana Ārati",     icon: "🔔" },
+  { time: "6:45 PM",  name: "Sandhyā Ārati",        icon: "🪔" },
+  { time: "8:00 PM",  name: "Śayana Ārati",         icon: "🌙" },
+];
+
+export default function AboutISKCONDurgapur() {
   return (
-    <main style={{ background: "#0c0701", color: "#e2c99a", fontFamily: "'EB Garamond', Georgia, serif", minHeight: "100vh" }}>
+    <div
+      style={{
+        background: "linear-gradient(135deg, #fff7ed 0%, #fffbeb 50%, #ffedd5 100%)",
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        color: "#1c1917",
+        overflowX: "hidden",
+      }}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Cinzel:wght@400;500;600&display=swap');
 
         .cinzel    { font-family: 'Cinzel', serif; }
         .cormorant { font-family: 'Cormorant Garamond', serif; }
 
-        .gold-text {
-          background: linear-gradient(135deg, #f7e099 0%, #d49132 50%, #f0c564 100%);
+        .orange-grad {
+          background: linear-gradient(135deg, #ea580c, #f59e0b);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        .body-text { color: #c4a06a; }
-        .highlight { color: #e8a830; }
 
-        .divider {
+        .section-divider {
           display: flex; align-items: center; gap: 14px; justify-content: center;
         }
-        .divider::before, .divider::after {
-          content: ''; height: 1px; width: 64px;
-          background: linear-gradient(90deg, transparent, #c97c3080);
+        .section-divider::before, .section-divider::after {
+          content: ''; height: 1px; width: 72px;
+          background: linear-gradient(90deg, transparent, rgba(234,88,12,0.4));
         }
-        .divider::after { background: linear-gradient(90deg, #c97c3080, transparent); }
-
-        .schedule-row {
-          display: grid;
-          grid-template-columns: 100px 1fr;
-          gap: 20px;
-          padding: 20px 24px;
-          border-bottom: 1px solid #c97c3012;
-          transition: background 0.25s;
+        .section-divider::after {
+          background: linear-gradient(90deg, rgba(234,88,12,0.4), transparent);
         }
-        .schedule-row:hover { background: #1a0c0430; }
-        .schedule-row:last-child { border-bottom: none; }
 
-        .deity-card {
-          background: linear-gradient(145deg, #1a0d04, #120900);
-          border: 1px solid #c97c3020;
+        .feat-card {
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(234,88,12,0.12);
+          border-radius: 14px;
+          padding: 18px 14px;
+          text-align: center;
+          transition: all 0.3s ease;
+          backdrop-filter: blur(6px);
+        }
+        .feat-card:hover {
+          background: rgba(255,255,255,0.95);
+          border-color: rgba(234,88,12,0.35);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 32px rgba(234,88,12,0.12);
+        }
+
+        .timeline-item {
+          background: rgba(255,255,255,0.65);
+          border: 1px solid rgba(234,88,12,0.12);
+          border-radius: 16px;
+          padding: 22px 26px;
+          backdrop-filter: blur(8px);
+          transition: all 0.3s ease;
+        }
+        .timeline-item:hover {
+          background: rgba(255,255,255,0.9);
+          border-color: rgba(234,88,12,0.3);
+          transform: translateX(6px);
+          box-shadow: 0 8px 28px rgba(234,88,12,0.1);
+        }
+
+        .deity-fact {
+          background: rgba(255,255,255,0.65);
+          border: 1px solid rgba(234,88,12,0.12);
           border-radius: 12px;
-          padding: 18px 22px;
-          transition: border-color 0.3s;
+          padding: 16px 20px;
+          backdrop-filter: blur(6px);
+          transition: all 0.3s ease;
         }
-        .deity-card:hover { border-color: #c97c3045; }
-
-        .feature-pill {
-          text-align: center; padding: 14px 10px;
-          background: #110800; border: 1px solid #c97c3020;
-          border-radius: 10px;
-          transition: border-color 0.3s, background 0.3s;
+        .deity-fact:hover {
+          background: rgba(255,255,255,0.9);
+          border-color: rgba(234,88,12,0.3);
+          box-shadow: 0 6px 20px rgba(234,88,12,0.1);
         }
-        .feature-pill:hover { border-color: #c97c3050; background: #1a0d04; }
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0c0701; }
-        ::-webkit-scrollbar-thumb { background: #c97c3055; border-radius: 4px; }
+        .sched-pill {
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(234,88,12,0.12);
+          border-radius: 12px;
+          padding: 14px 18px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          backdrop-filter: blur(6px);
+          transition: all 0.25s ease;
+        }
+        .sched-pill:hover {
+          background: rgba(255,255,255,0.95);
+          border-color: rgba(234,88,12,0.35);
+          transform: translateX(4px);
+          box-shadow: 0 6px 20px rgba(234,88,12,0.1);
+        }
       `}</style>
 
-      {/* ══════════════════════════════════════
-    HERO
-══════════════════════════════════════ */}
-      <section style={{
-        minHeight: "auto",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        textAlign: "center", padding: "100px 24px 50px",
-        background: "radial-gradient(ellipse at 50% 40%, #2a1200 0%, #0c0701 65%)",
-        borderBottom: "1px solid #c97c3015",
-        position: "relative", overflow: "hidden",
-      }}>
-        {[520, 340].map(size => (
-          <div key={size} style={{
-            position: "absolute", width: size, height: size, borderRadius: "50%",
-            border: `1px solid #c97c30${size === 520 ? "12" : "1a"}`,
-            top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            pointerEvents: "none",
-          }} />
-        ))}
+      {/* ── Background blobs ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{ opacity: 0.12 }}>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-300 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-175 h-175 bg-yellow-100 rounded-full blur-3xl" style={{ opacity: 0.5 }} />
+      </div>
 
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 700 }}>
-          <p className="cinzel" style={{ color: "#c97c3099", fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 12 }}>
-            Local Chapter · Durgapur, West Bengal
-          </p>
+      {/* ════════════════════════════
+          PAGE HERO BANNER
+      ════════════════════════════ */}
+      <section
+        className="relative z-10"
+        style={{
+          padding: "85px 24px 40px",
+          textAlign: "center",
+          borderBottom: "1px solid rgba(234,88,12,0.12)",
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Label */}
+          <div className="inline-flex items-center gap-3 mb-5">
+            <div className="w-8 h-px bg-orange-400" />
+            <span className="cinzel text-[10px] tracking-[0.35em] uppercase text-orange-500">
+              ISKCON Durgapur · West Bengal
+            </span>
+            <div className="w-8 h-px bg-orange-400" />
+          </div>
 
-          <h1 className="cinzel gold-text" style={{ fontSize: "clamp(24px, 4vw, 42px)", fontWeight: 600, lineHeight: 1.05, marginBottom: 8 }}>
-            ISKCON<br />Durgapur
+          {/* Title */}
+          <h1
+            className="cinzel font-semibold leading-tight text-gray-800 mb-4"
+            style={{ fontSize: "clamp(2rem, 5vw, 4rem)", letterSpacing: "0.04em" }}
+          >
+            About <span className="orange-grad">ISKCON Durgapur</span>
           </h1>
 
-          <p className="cinzel" style={{ color: "#9a6e3a", fontSize: "clamp(9px, 1.1vw, 11px)", letterSpacing: "0.22em", marginBottom: 16 }}>
-            Śrī Śrī Rādhā Madana Mohana Temple
+          {/* Ornament */}
+          <div className="section-divider my-6">
+            <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.7 }} />
+          </div>
+
+          {/* Tagline */}
+          <p
+            className="cormorant italic text-gray-500 mx-auto"
+            style={{ fontSize: "clamp(1.1rem, 2vw, 1.4rem)", maxWidth: 520, lineHeight: 1.8 }}
+          >
+            A sanctuary of bhakti in the heart of the steel city — where devotion found its eternal home.
           </p>
 
-          <div className="divider" style={{ marginBottom: 16 }}>
-            <span style={{ color: "#c97c3055", fontSize: 10 }}>✦</span>
+          {/* Open badge */}
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg mt-8">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="cinzel text-[10px] tracking-wider text-gray-700">
+              Temple Open Daily · 4:30 AM – 8:30 PM
+            </span>
           </div>
-
-          <blockquote className="cormorant" style={{
-            fontSize: "clamp(13px, 1.6vw, 16px)",
-            fontStyle: "italic", color: "#a07840",
-            lineHeight: 1.6, maxWidth: 420, margin: "0 auto 10px",
-          }}>
-            &ldquo;A sanctuary of bhakti in the heart of the steel city.&rdquo;
-          </blockquote>
-
-          <div style={{
-            display: "inline-flex", gap: 10, alignItems: "center",
-            marginTop: 20, padding: "8px 18px",
-            background: "linear-gradient(135deg,#1e1000,#160c00)",
-            border: "1px solid #c97c3030", borderRadius: 40,
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#c97c30", boxShadow: "0 0 6px #c97c30" }} />
-            <p className="cinzel" style={{ color: "#c97c30cc", fontSize: 10, letterSpacing: "0.2em" }}>OPEN DAILY · 4:30 AM – 8:30 PM</p>
-          </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════
-          ABOUT THE TEMPLE
-      ══════════════════════════════════════ */}
-      <section style={{ padding: "80px 24px", maxWidth: 1060, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 56, alignItems: "center" }}>
+      {/* ════════════════════════════
+          ABOUT — IMAGE + TEXT
+      ════════════════════════════ */}
+      <section className="relative z-10" style={{ padding: "90px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64, alignItems: "center" }}>
 
           {/* Image */}
-          <Reveal>
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", inset: -10, borderRadius: 20, border: "1px solid #c97c3020", zIndex: 0 }} />
-              <div style={{ position: "relative", zIndex: 1, borderRadius: 16, overflow: "hidden", aspectRatio: "4/3", background: "#1a0c04" }}>
-                <Image src="/radhamadanmohan.jpg" alt="ISKCON Durgapur Temple" fill style={{ objectFit: "cover" }} />
+          <Reveal direction="left">
+            <div className="relative">
+              {/* Tilt accent behind */}
+              <div
+                className="absolute -top-4 -left-4 w-32 h-48 rounded-2xl -z-10"
+                style={{ background: "linear-gradient(135deg, #fbbf24, #ea580c)", transform: "rotate(-5deg)", opacity: 0.8 }}
+              />
+              <div
+                className="absolute -bottom-4 -right-4 w-44 h-32 rounded-2xl -z-10"
+                style={{ background: "linear-gradient(135deg, #f97316, #ef4444)", transform: "rotate(5deg)", opacity: 0.75 }}
+              />
+              {/* Image */}
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl" style={{ aspectRatio: "4/3" }}>
+                <Image
+                  src="/radhamadanmohan.jpg"
+                  alt="Śrī Śrī Rādhā Madana Mohana"
+                  fill
+                  style={{ objectFit: "cover", objectPosition: "top" }}
+                />
+                {/* Bottom gradient */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" }}
+                />
+                {/* Floating badge */}
+                <div
+                  className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl"
+                  style={{ zIndex: 2 }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="cinzel font-bold text-gray-800 text-[10px] tracking-wide uppercase leading-snug">
+                        Sri Sri Radha Madanmohan Temple
+                      </h3>
+                      <p className="cinzel text-gray-500 text-[8px] tracking-wider uppercase mt-0.5">
+                        Durgapur, West Bengal
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl">🙏</div>
+                      <p className="cinzel text-[7px] text-gray-400 tracking-widest uppercase mt-0.5">Jai Sri Krishna</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </Reveal>
 
           {/* Text */}
-          <Reveal delay={120}>
-            <p className="cinzel" style={{ color: "#c97c3077", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 16 }}>About the Temple</p>
-            <h2 className="cinzel" style={{ fontSize: "clamp(26px, 4.5vw, 40px)", fontWeight: 600, lineHeight: 1.2, marginBottom: 20 }}>
-              <span style={{ color: "#d4c4a0" }}>Where Devotion</span><br />
-              <span className="gold-text">Found Its Home</span>
+          <Reveal direction="right" delay={100}>
+            <p className="cinzel text-[10px] tracking-[0.32em] uppercase text-orange-500 mb-4">About the Temple</p>
+            <h2
+              className="cinzel font-semibold text-gray-800 mb-2 leading-tight"
+              style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.6rem)" }}
+            >
+              Where Devotion<br />
+              <span className="orange-grad">Found Its Home</span>
             </h2>
-            <div style={{ width: 48, height: 1, background: "linear-gradient(90deg,#c97c30,transparent)", marginBottom: 28 }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: "clamp(15px, 1.8vw, 17px)", lineHeight: 1.85 }}>
-              <p className="body-text">
-                ISKCON Durgapur is a vibrant centre of <span className="highlight">bhakti-yoga</span> established in the industrial heartland of West Bengal. The temple serves as a spiritual refuge for thousands of residents, students, and families across the <span className="highlight">Durgapur–Asansol</span> region.
+
+            {/* Decorative rule */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="w-14 h-px" style={{ background: "linear-gradient(90deg, rgba(234,88,12,0.5), transparent)" }} />
+              <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.65 }} />
+            </div>
+
+            <div className="cormorant text-gray-600 leading-relaxed" style={{ fontSize: "clamp(1rem, 1.6vw, 1.15rem)", display: "flex", flexDirection: "column", gap: 18 }}>
+              <p>
+                ISKCON Durgapur is a vibrant centre of{" "}
+                <span className="text-orange-600 font-medium">bhakti-yoga</span> established in the industrial heartland of West Bengal — a spiritual refuge for thousands of residents, students, and families across the{" "}
+                <span className="text-orange-600 font-medium">Durgapur–Asansol</span> region.
               </p>
-              <p className="body-text">
-                The temple is dedicated to <span className="highlight">Śrī Śrī Rādhā Madana Mohana</span> — the Divine Couple whose worship forms the very foundation of the <span className="highlight">Gauḍīya Vaiṣṇava</span> tradition brought to the West by Śrīla Prabhupāda.
+              <p>
+                The temple is dedicated to{" "}
+                <span className="text-orange-600 font-medium">Śrī Śrī Rādhā Madana Mohana</span> — the Divine Couple whose worship forms the very foundation of the{" "}
+                <span className="text-orange-600 font-medium">Gauḍīya Vaiṣṇava</span> tradition brought to the West by Śrīla Prabhupāda.
               </p>
-              <p className="body-text">
-                From its founding, ISKCON Durgapur has carried the mission of spreading <span className="highlight">Krishna consciousness</span> through daily programmes, prasādam distribution, and cultural outreach — touching lives far beyond its walls.
+              <p>
+                From its founding, ISKCON Durgapur has carried the mission of spreading{" "}
+                <span className="text-orange-600 font-medium">Krishna consciousness</span> through daily programmes, prasādam distribution, and cultural outreach — touching lives far beyond its walls.
               </p>
+            </div>
+
+            {/* Sanskrit verse block */}
+            <div
+              className="mt-6 p-4 rounded-xl backdrop-blur-sm"
+              style={{ background: "rgba(255,255,255,0.6)", borderLeft: "4px solid #ea580c" }}
+            >
+              <p className="cormorant text-xl text-orange-700 italic mb-1">हरे कृष्ण हरे कृष्ण</p>
+              <p className="cormorant text-lg text-orange-600 italic">कृष्ण कृष्ण हरे हरे</p>
             </div>
 
             {/* Feature pills */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 32 }}>
-              {localFeatures.map((label) => (
-                <div key={label} className="feature-pill">
-                  <p className="cinzel highlight" style={{ fontSize: 10, letterSpacing: "0.15em" }}>{label}</p>
+            <div className="grid grid-cols-3 gap-3 mt-8">
+              {localFeatures.map(({ icon, label }) => (
+                <div key={label} className="feat-card">
+                  <div className="text-2xl mb-2">{icon}</div>
+                  <p className="cinzel text-[8px] tracking-[0.18em] uppercase text-orange-600">{label}</p>
                 </div>
               ))}
             </div>
@@ -230,174 +377,247 @@ export default function ISKCONDurgapurPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          ESTABLISHMENT TIMELINE
-      ══════════════════════════════════════ */}
-      <section style={{
-        padding: "70px 24px",
-        background: "linear-gradient(135deg,#110800,#0e0600,#110800)",
-        borderTop: "1px solid #c97c3015", borderBottom: "1px solid #c97c3015",
-      }}>
-        <div style={{ maxWidth: 820, margin: "0 auto" }}>
-          <Reveal>
-            <p className="cinzel" style={{ textAlign: "center", color: "#c97c3070", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Our Story</p>
-            <h2 className="cinzel" style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 36px)", color: "#d4c4a0", marginBottom: 10 }}>
-              How the Temple <span className="gold-text">Came to Be</span>
-            </h2>
-            <div className="divider" style={{ marginBottom: 48 }}>
-              <span style={{ color: "#c97c3055", fontSize: 12 }}>✦</span>
-            </div>
-          </Reveal>
-
-          {/* Timeline entries */}
-          <div style={{ position: "relative", paddingLeft: 40 }}>
-            <div style={{
-              position: "absolute", left: 15, top: 0, bottom: 0, width: 1,
-              background: "linear-gradient(180deg, transparent, #c97c3040 10%, #c97c3040 90%, transparent)",
-            }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-              {[
-                {
-                  year: "Early Days",
-                  event: "A small group of devotees in Durgapur began gathering for kīrtan and Bhāgavatam study, planting the first seeds of an organised spiritual community in the steel city.",
-                },
-                {
-                  year: "Establishment",
-                  event: "ISKCON Durgapur was formally established under the guidance of ISKCON leaders, with the installation of Śrī Śrī Rādhā Madana Mohana marking the official beginning of daily Deity worship.",
-                },
-                {
-                  year: "Growth",
-                  event: "The congregation steadily grew — programmes expanded, prasādam distribution began reaching the wider community, and the temple became a landmark of spiritual culture in the region.",
-                },
-                {
-                  year: "Today",
-                  event: "The temple now hosts hundreds of devotees daily, runs ongoing outreach programmes, and continues to grow as a beacon of bhakti for the Durgapur–Asansol belt.",
-                },
-              ].map(({ year, event }, i) => (
-                <Reveal key={year} delay={i * 70}>
-                  <div style={{ position: "relative" }}>
-                    <div style={{
-                      position: "absolute", left: -47, top: 5,
-                      width: 14, height: 14, borderRadius: "50%",
-                      background: "#0c0701", border: "2px solid #c97c30",
-                      boxShadow: "0 0 8px #c97c3055",
-                    }} />
-                    <div style={{ background: "linear-gradient(135deg,#1a0d04,#110800)", border: "1px solid #c97c3020", borderRadius: 12, padding: "16px 20px" }}>
-                      <p className="cinzel highlight" style={{ fontSize: 12, fontWeight: 500, marginBottom: 7, letterSpacing: "0.06em" }}>{year}</p>
-                      <p className="body-text" style={{ fontSize: 14, lineHeight: 1.78 }}>{event}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
+      {/* ════════════════════════════
+          STATS BAR
+      ════════════════════════════ */}
+      <section
+        className="relative z-10"
+        style={{
+          background: "rgba(255,237,213,0.6)",
+          borderTop: "1px solid rgba(234,88,12,0.12)",
+          borderBottom: "1px solid rgba(234,88,12,0.12)",
+          backdropFilter: "blur(8px)",
+          padding: "48px 24px",
+        }}
+      >
+        <div
+          className="max-w-4xl mx-auto"
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 0 }}
+        >
+          {[
+            { num: "8",    label: "Daily Āratīs",   italic: false },
+            { num: "365",  label: "Days Open",      italic: false },
+            { num: "1000+",label: "Lives Touched",  italic: false },
+            { num: "∞",    label: "Mercy & Grace",  italic: true  },
+          ].map((s, i) => (
+            <Reveal key={s.label} delay={i * 80}>
+              <div
+                className="text-center py-4"
+                style={{
+                  borderRight: i < 3 ? "1px solid rgba(234,88,12,0.15)" : "none",
+                }}
+              >
+                <div
+                  className={`cormorant text-orange-500 font-light leading-none mb-2 ${s.italic ? "italic" : ""}`}
+                  style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+                >
+                  {s.num}
+                </div>
+                <div className="cinzel text-[8px] tracking-[0.22em] uppercase text-orange-400">{s.label}</div>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          DEITY — RADHA MADAN MOHAN
-      ══════════════════════════════════════ */}
-      <section style={{ padding: "80px 24px", maxWidth: 1060, margin: "0 auto" }}>
+      {/* ════════════════════════════
+          TIMELINE
+      ════════════════════════════ */}
+      <section className="relative z-10" style={{ padding: "90px 24px", maxWidth: 860, margin: "0 auto" }}>
         <Reveal>
-          <p className="cinzel" style={{ textAlign: "center", color: "#c97c3070", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>The Presiding Deities</p>
-          <h2 className="cinzel" style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 36px)", color: "#d4c4a0", marginBottom: 10 }}>
-            Śrī Śrī Rādhā <span className="gold-text">Madana Mohana</span>
+          <p className="cinzel text-[10px] tracking-[0.32em] uppercase text-orange-500 text-center mb-3">Our Story</p>
+          <h2
+            className="cinzel font-semibold text-gray-800 text-center leading-tight mb-3"
+            style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.6rem)" }}
+          >
+            How the Temple <span className="orange-grad">Came to Be</span>
           </h2>
-          <div className="divider" style={{ marginBottom: 52 }}>
-            <span style={{ color: "#c97c3055", fontSize: 12 }}>✦</span>
+          <div className="section-divider mb-14">
+            <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.7 }} />
           </div>
         </Reveal>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 56, alignItems: "start" }}>
-          <Reveal delay={80}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: "clamp(15px, 1.8vw, 17px)", lineHeight: 1.85 }}>
-              <p className="body-text">
-                <span className="highlight">Madana Mohana</span> — &ldquo;He who enchants even the enchanter of minds&rdquo; — is one of the most intimate and beloved forms of <span className="highlight">Lord Kṛṣṇa</span>. He is worshipped as the original attractor of all hearts, whose beauty surpasses even that of Cupid himself.
-              </p>
-              <p className="body-text">
-                In the <span className="highlight">Gauḍīya Vaiṣṇava</span> tradition, Madana Mohana is the first of the three principal Vṛndāvana Deities — representing the <span className="highlight">sambandha</span> aspect: the foundational understanding of one&apos;s relationship with the Supreme. To know Madana Mohana is to know who we truly are, and who Kṛṣṇa truly is.
-              </p>
-              <p className="body-text">
-                <span className="highlight">Śrīmatī Rādhārāṇī</span> — the Divine consort — stands beside Him as the embodiment of <span className="highlight">pure devotional love</span> (śuddha-bhakti). She is the internal potency of Kṛṣṇa and the very source of all spiritual energy.
-              </p>
-              <p className="body-text">
-                Darśana of Rādhā Madana Mohana is considered deeply purifying. Devotees believe that simply gazing upon Their lotus faces with love dissolves material attachment and awakens the dormant seed of devotion within the heart.
-              </p>
-            </div>
-          </Reveal>
+        <div className="relative pl-10">
+          {/* Vertical line */}
+          <div
+            className="absolute left-3 top-2 bottom-2 w-px"
+            style={{ background: "linear-gradient(180deg, transparent, rgba(234,88,12,0.3) 10%, rgba(234,88,12,0.3) 90%, transparent)" }}
+          />
 
-          <Reveal delay={160}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {deityFacts.map(({ label, value }) => (
-                <div key={label} className="deity-card">
-                  <p className="cinzel" style={{ color: "#c97c3088", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 6 }}>{label}</p>
-                  <p className="body-text" style={{ fontSize: 15, lineHeight: 1.65 }}>{value}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {timeline.map(({ year, event }, i) => (
+              <Reveal key={year} delay={i * 90}>
+                <div className="relative">
+                  {/* Timeline dot */}
+                  <div
+                    className="absolute rounded-full"
+                    style={{
+                      left: -38, top: 20,
+                      width: 14, height: 14,
+                      background: "linear-gradient(135deg, #ea580c, #f59e0b)",
+                      boxShadow: "0 0 10px rgba(234,88,12,0.4)",
+                    }}
+                  />
+                  <div className="timeline-item">
+                    <p className="cinzel text-orange-500 font-medium mb-2" style={{ fontSize: 13, letterSpacing: "0.06em" }}>{year}</p>
+                    <p className="cormorant text-gray-600" style={{ fontSize: "clamp(1rem, 1.5vw, 1.1rem)", lineHeight: 1.8 }}>{event}</p>
+                  </div>
                 </div>
-              ))}
-
-              {/* Quote */}
-              <div style={{
-                marginTop: 8, padding: "22px 24px",
-                background: "linear-gradient(135deg,#1e1000,#150e00)",
-                border: "1px solid #c97c3025", borderRadius: 14,
-              }}>
-                <p className="cormorant" style={{ fontSize: 22, fontStyle: "italic", color: "#c9a060", lineHeight: 1.65, marginBottom: 12 }}>
-                  &ldquo;Kṛṣṇa is so beautiful that He attracts even those who are self-satisfied — and He even attracts Rādhārāṇī Herself.&rdquo;
-                </p>
-                <p className="cinzel" style={{ color: "#c97c3055", fontSize: 9, letterSpacing: "0.25em" }}>— ŚRĪLA PRABHUPĀDA</p>
-              </div>
-            </div>
-          </Reveal>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          DAILY SCHEDULE
-      ══════════════════════════════════════ */}
-      <section style={{
-        padding: "80px 24px",
-        background: "linear-gradient(135deg,#110800,#0e0600,#110800)",
-        borderTop: "1px solid #c97c3015",
-      }}>
-        <div style={{ maxWidth: 820, margin: "0 auto" }}>
+      {/* ════════════════════════════
+          DEITY SECTION
+      ════════════════════════════ */}
+      <section
+        className="relative z-10"
+        style={{
+          padding: "90px 24px",
+          background: "rgba(255,237,213,0.4)",
+          borderTop: "1px solid rgba(234,88,12,0.1)",
+          borderBottom: "1px solid rgba(234,88,12,0.1)",
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <Reveal>
-            <p className="cinzel" style={{ textAlign: "center", color: "#c97c3070", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Temple Programme</p>
-            <h2 className="cinzel" style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 36px)", color: "#d4c4a0", marginBottom: 10 }}>
-              Daily <span className="gold-text">Schedule</span>
+            <p className="cinzel text-[10px] tracking-[0.32em] uppercase text-orange-500 text-center mb-3">The Presiding Deities</p>
+            <h2
+              className="cinzel font-semibold text-gray-800 text-center leading-tight mb-3"
+              style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.6rem)" }}
+            >
+              Śrī Śrī Rādhā <span className="orange-grad">Madana Mohana</span>
             </h2>
-            <div className="divider" style={{ marginBottom: 48 }}>
-              <span style={{ color: "#c97c3055", fontSize: 12 }}>✦</span>
+            <div className="section-divider mb-14">
+              <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.7 }} />
             </div>
           </Reveal>
 
-          <Reveal>
-            <div style={{ background: "linear-gradient(145deg,#1a0d04,#110800)", border: "1px solid #c97c3018", borderRadius: 16, overflow: "hidden" }}>
-              {schedule.map(({ time, name, desc }, i) => (
-                <div key={time} className="schedule-row" style={{ borderTop: i === 0 ? "none" : undefined }}>
-                  {/* Time */}
-                  <div style={{ paddingTop: 2 }}>
-                    <p className="cinzel highlight" style={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{time}</p>
-                  </div>
-                  {/* Name + desc */}
-                  <div>
-                    <p className="cinzel" style={{ color: "#e2c99a", fontSize: 14, marginBottom: 5, fontWeight: 500 }}>{name}</p>
-                    <p className="body-text" style={{ fontSize: 13.5, lineHeight: 1.72 }}>{desc}</p>
-                  </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64, alignItems: "start" }}>
+            {/* Left — prose */}
+            <Reveal direction="left" delay={80}>
+              <div
+                className="cormorant text-gray-600 leading-relaxed"
+                style={{ fontSize: "clamp(1rem, 1.6vw, 1.15rem)", display: "flex", flexDirection: "column", gap: 20 }}
+              >
+                <p>
+                  <span className="text-orange-600 font-medium">Madana Mohana</span> — &ldquo;He who enchants even the enchanter of minds&rdquo; — is one of the most intimate and beloved forms of{" "}
+                  <span className="text-orange-600 font-medium">Lord Kṛṣṇa</span>. He is worshipped as the original attractor of all hearts, whose beauty surpasses even Cupid himself.
+                </p>
+                <p>
+                  In the <span className="text-orange-600 font-medium">Gauḍīya Vaiṣṇava</span> tradition, Madana Mohana represents the{" "}
+                  <span className="text-orange-600 font-medium">sambandha</span> aspect — the foundational understanding of one&apos;s eternal relationship with the Supreme.
+                </p>
+                <p>
+                  <span className="text-orange-600 font-medium">Śrīmatī Rādhārāṇī</span> stands beside Him as the embodiment of{" "}
+                  <span className="text-orange-600 font-medium">pure devotional love</span>. She is the internal potency of Kṛṣṇa and the very source of all spiritual energy.
+                </p>
+                <p>
+                  Darśana of Rādhā Madana Mohana is considered deeply purifying — simply gazing upon Their lotus faces with love dissolves material attachment and awakens the dormant seed of devotion.
+                </p>
+
+                {/* Pull quote */}
+                <div
+                  className="rounded-xl p-5 backdrop-blur-sm"
+                  style={{
+                    background: "rgba(255,255,255,0.6)",
+                    borderLeft: "4px solid #ea580c",
+                    marginTop: 8,
+                  }}
+                >
+                  <p className="cormorant italic text-orange-700 mb-3" style={{ fontSize: "clamp(1.05rem, 1.8vw, 1.25rem)", lineHeight: 1.7 }}>
+                    &ldquo;Kṛṣṇa is so beautiful that He attracts even those who are self-satisfied — and He even attracts Rādhārāṇī Herself.&rdquo;
+                  </p>
+                  <p className="cinzel text-orange-400 text-[8px] tracking-[0.25em]">— ŚRĪLA PRABHUPĀDA</p>
                 </div>
-              ))}
-            </div>
-          </Reveal>
+              </div>
+            </Reveal>
+
+            {/* Right — fact cards */}
+            <Reveal direction="right" delay={160}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {deityFacts.map(({ label, value }) => (
+                  <div key={label} className="deity-fact">
+                    <p className="cinzel text-orange-400 text-[8px] tracking-[0.28em] uppercase mb-2">{label}</p>
+                    <p className="cormorant text-gray-600" style={{ fontSize: "clamp(1rem, 1.5vw, 1.1rem)", lineHeight: 1.65 }}>{value}</p>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          MAHA MANTRA FOOTER
-      ══════════════════════════════════════ */}
-      <div style={{ textAlign: "center", padding: "28px 24px", borderTop: "1px solid #c97c3012", marginTop: 40 }}>
-        <p className="cinzel" style={{ color: "#c97c3035", fontSize: 10, letterSpacing: "0.22em" }}>
-          Hare Krishna · Hare Krishna · Krishna Krishna · Hare Hare · Hare Rāma · Hare Rāma · Rāma Rāma · Hare Hare
+      {/* ════════════════════════════
+          DAILY SCHEDULE
+      ════════════════════════════ */}
+      <section className="relative z-10" style={{ padding: "90px 24px", maxWidth: 860, margin: "0 auto" }}>
+        <Reveal>
+          <p className="cinzel text-[10px] tracking-[0.32em] uppercase text-orange-500 text-center mb-3">Temple Programme</p>
+          <h2
+            className="cinzel font-semibold text-gray-800 text-center leading-tight mb-3"
+            style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.6rem)" }}
+          >
+            Daily <span className="orange-grad">Schedule</span>
+          </h2>
+          <div className="section-divider mb-14">
+            <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.7 }} />
+          </div>
+        </Reveal>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 12 }}>
+          {schedule.map(({ time, name, icon }, i) => (
+            <Reveal key={time} delay={i * 60}>
+              <div className="sched-pill">
+                <div className="text-2xl">{icon}</div>
+                <div>
+                  <p className="cinzel text-orange-500 font-medium" style={{ fontSize: 11, letterSpacing: "0.06em" }}>{time}</p>
+                  <p className="cinzel text-gray-700 font-medium" style={{ fontSize: 12, letterSpacing: "0.04em", marginTop: 2 }}>{name}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ════════════════════════════
+          FOOTER MANTRA
+      ════════════════════════════ */}
+      <footer
+        className="relative z-10 text-center"
+        style={{
+          padding: "48px 24px",
+          borderTop: "1px solid rgba(234,88,12,0.12)",
+          background: "rgba(254,215,170,0.4)",
+        }}
+      >
+        {/* Ornament */}
+        <div className="flex items-center gap-3 justify-center mb-6">
+          <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(234,88,12,0.4))" }} />
+          <div className="w-1.5 h-1.5 rotate-45 bg-orange-400" style={{ opacity: 0.7 }} />
+          <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, rgba(234,88,12,0.4), transparent)" }} />
+        </div>
+
+        <p
+          className="cormorant italic text-orange-400"
+          style={{ fontSize: "clamp(13px, 1.8vw, 17px)", letterSpacing: "0.14em", lineHeight: 2.2 }}
+        >
+          Hare Krishna · Hare Krishna · Krishna Krishna · Hare Hare<br />
+          Hare Rāma · Hare Rāma · Rāma Rāma · Hare Hare
         </p>
-      </div>
-    </main>
+
+        <div className="flex items-center gap-3 justify-center mt-6">
+          <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(234,88,12,0.4))" }} />
+          <div className="w-1.5 h-1.5 rotate-45 bg-orange-400" style={{ opacity: 0.7 }} />
+          <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, rgba(234,88,12,0.4), transparent)" }} />
+        </div>
+
+        <p className="cinzel text-orange-300 mt-6" style={{ fontSize: 8, letterSpacing: "0.3em" }}>
+          ISKCON DURGAPUR · WEST BENGAL · JAI SRI KRISHNA
+        </p>
+      </footer>
+    </div>
   );
 }
