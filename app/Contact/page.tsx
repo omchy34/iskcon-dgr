@@ -1,9 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { FaArrowRight, FaPrayingHands, FaFacebook, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
+import { FaFacebook, FaYoutube, FaWhatsapp, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
 
 /* ── Scroll reveal hook ── */
 function useInView(threshold = 0.12) {
@@ -22,12 +20,7 @@ function useInView(threshold = 0.12) {
   return { ref, visible };
 }
 
-interface RevealProps {
-  children: React.ReactNode;
-  delay?: number;
-}
-
-function Reveal({ children, delay = 0 }: RevealProps) {
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const { ref, visible } = useInView();
   return (
     <div
@@ -46,61 +39,19 @@ function Reveal({ children, delay = 0 }: RevealProps) {
 interface FormState {
   name: string;
   email: string;
-  phone: string;
   subject: string;
   message: string;
 }
 
-const contactDetails = [
-  {
-    icon: "📍",
-    label: "Address",
-    lines: ["ISKCON Durgapur", "City Centre, Durgapur", "West Bengal – 713216"],
-  },
-  {
-    icon: "📞",
-    label: "Phone",
-    lines: ["+91 98765 43210", "+91 91234 56789"],
-  },
-  {
-    icon: "✉️",
-    label: "Email",
-    lines: ["info@iskcondurgapur.org", "seva@iskcondurgapur.org"],
-  },
-  {
-    icon: "🕐",
-    label: "Temple Hours",
-    lines: ["Open Daily", "4:30 AM – 8:30 PM"],
-  },
-];
-
-const scheduleHighlights = [
-  { time: "4:30 AM", name: "Maṅgala Ārati" },
-  { time: "7:30 AM", name: "Guru Pūjā & Kīrtan" },
-  { time: "8:00 AM", name: "Bhāgavatam Class" },
-  { time: "12:00 PM", name: "Rāja Bhoga Ārati" },
-  { time: "6:45 PM", name: "Sandhyā Ārati" },
-  { time: "8:00 PM", name: "Śayana Ārati" },
-];
-
-const socialLinks = [
-  { platform: "Facebook",  handle: "@ISKCONDurgapur",   href: "#", Icon: FaFacebook  },
-  { platform: "Instagram", handle: "@iskcon.durgapur",  href: "#", Icon: FaInstagram },
-  { platform: "YouTube",   handle: "ISKCON Durgapur",   href: "#", Icon: FaYoutube   },
-  { platform: "WhatsApp",  handle: "+91 98765 43210",   href: "#", Icon: FaWhatsapp  },
-];
-
 export default function ContactPage() {
-  const [form, setForm] = useState<FormState>({
-    name: "", email: "", phone: "", subject: "", message: "",
-  });
+  const [form, setForm] = useState<FormState>({ name: "", email: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => { setIsLoaded(true); }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -111,6 +62,8 @@ export default function ContactPage() {
     setLoading(false);
     setSubmitted(true);
   };
+
+  const isDisabled = loading || !form.name || !form.email || !form.message;
 
   return (
     <main style={{
@@ -132,35 +85,56 @@ export default function ContactPage() {
           background-clip: text;
         }
 
-        .divider {
-          display: flex; align-items: center; gap: 14px; justify-content: center;
+        /* ── Two main cards ── */
+        .panel {
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(234,88,12,0.13);
+          border-radius: 24px;
+          padding: 40px 36px;
+          box-shadow: 0 6px 36px rgba(234,88,12,0.08);
+          transition: box-shadow 0.3s, border-color 0.3s;
         }
-        .divider::before, .divider::after {
-          content: ''; height: 1px; width: 64px;
-          background: linear-gradient(90deg, transparent, rgba(234,88,12,0.35));
-        }
-        .divider::after { background: linear-gradient(90deg, rgba(234,88,12,0.35), transparent); }
-
-        .contact-card {
-          background: rgba(255,255,255,0.72);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(234,88,12,0.14);
-          border-radius: 20px;
-          padding: 26px 24px;
-          transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
-          box-shadow: 0 4px 24px rgba(234,88,12,0.06);
-        }
-        .contact-card:hover {
-          border-color: rgba(234,88,12,0.28);
-          box-shadow: 0 8px 36px rgba(234,88,12,0.12);
-          transform: translateY(-2px);
+        .panel:hover {
+          box-shadow: 0 12px 48px rgba(234,88,12,0.14);
+          border-color: rgba(234,88,12,0.22);
         }
 
+        /* ── Info rows inside left panel ── */
+        .info-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 18px 0;
+          border-bottom: 1px solid rgba(234,88,12,0.09);
+        }
+        .info-row:last-of-type { border-bottom: none; }
+
+        .icon-bubble {
+          width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, #fff7ed, #ffedd5);
+          border: 1px solid rgba(234,88,12,0.18);
+          box-shadow: 0 2px 10px rgba(234,88,12,0.1);
+          font-size: 17px; color: #ea580c;
+        }
+
+        /* ── Social icons ── */
+        .social-btn {
+          width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 18px; color: #fff;
+          transition: transform 0.2s, box-shadow 0.2s;
+          text-decoration: none;
+        }
+        .social-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+
+        /* ── Form inputs ── */
         .form-input {
           width: 100%;
-          background: rgba(255,255,255,0.85);
-          border: 1.5px solid rgba(234,88,12,0.2);
+          background: rgba(255,255,255,0.9);
+          border: 1.5px solid rgba(234,88,12,0.18);
           border-radius: 12px;
           padding: 13px 16px;
           color: #3a1a08;
@@ -170,61 +144,60 @@ export default function ContactPage() {
           transition: border-color 0.25s, box-shadow 0.25s;
           box-sizing: border-box;
         }
-        .form-input::placeholder { color: rgba(234,88,12,0.35); }
+        .form-input::placeholder { color: rgba(120,53,15,0.35); }
         .form-input:focus {
-          border-color: rgba(234,88,12,0.55);
-          box-shadow: 0 0 0 3px rgba(234,88,12,0.1);
+          border-color: rgba(234,88,12,0.5);
+          box-shadow: 0 0 0 3px rgba(234,88,12,0.09);
           background: #fff;
         }
 
-        select.form-input option { background: #fff7ed; color: #3a1a08; }
-
+        /* ── Submit button ── */
         .submit-btn {
-          width: 100%;
-          padding: 14px 24px;
+          width: 100%; padding: 15px 24px;
           background: linear-gradient(135deg, #ea580c, #d97706);
           border: none; border-radius: 12px;
           color: #fff;
           font-family: 'Cinzel', serif;
-          font-size: 11px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
+          font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
           cursor: pointer;
           transition: opacity 0.25s, transform 0.2s, box-shadow 0.25s;
-          box-shadow: 0 4px 18px rgba(234,88,12,0.3);
+          box-shadow: 0 4px 20px rgba(234,88,12,0.32);
         }
         .submit-btn:hover:not(:disabled) {
-          opacity: 0.92;
-          transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(234,88,12,0.4);
+          opacity: 0.91; transform: translateY(-1px);
+          box-shadow: 0 8px 28px rgba(234,88,12,0.42);
         }
-        .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .submit-btn:disabled { opacity: 0.42; cursor: not-allowed; }
 
-        .schedule-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 0;
-          border-bottom: 1px solid rgba(234,88,12,0.08);
+        /* ── Section label ── */
+        .section-label {
+          font-family: 'Cinzel', serif;
+          font-size: 9px; letter-spacing: 0.3em;
+          text-transform: uppercase; color: #c2410c;
+          margin-bottom: 8px;
         }
-        .schedule-row:last-child { border-bottom: none; }
+
+        .divider {
+          display: flex; align-items: center; gap: 14px; justify-content: center;
+        }
+        .divider::before, .divider::after {
+          content: ''; height: 1px; width: 64px;
+          background: linear-gradient(90deg, transparent, rgba(234,88,12,0.35));
+        }
+        .divider::after { background: linear-gradient(90deg, rgba(234,88,12,0.35), transparent); }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #fff7ed; }
         ::-webkit-scrollbar-thumb { background: rgba(234,88,12,0.3); border-radius: 4px; }
       `}</style>
 
-      {/* ══════════════════════════════════════
-          HERO
-      ══════════════════════════════════════ */}
+      {/* ══ HERO ══ */}
       <section style={{
-        position: "relative",
-        overflow: "hidden",
-        padding: "110px 24px 72px",
-        textAlign: "center",
+        position: "relative", overflow: "hidden",
+        padding: "110px 24px 72px", textAlign: "center",
         borderBottom: "1px solid rgba(234,88,12,0.1)",
       }}>
-        {/* background blobs */}
+        {/* blobs */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden", opacity: 0.18 }}>
           <div style={{ position: "absolute", top: 0, left: 0, width: 380, height: 380, background: "#fb923c", borderRadius: "50%", filter: "blur(80px)" }} />
           <div style={{ position: "absolute", bottom: 0, right: 0, width: 380, height: 380, background: "#fbbf24", borderRadius: "50%", filter: "blur(80px)" }} />
@@ -232,36 +205,22 @@ export default function ContactPage() {
         </div>
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto" }}>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.1 }}
-            style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 20 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={isLoaded ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.1 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{ width: 28, height: 1, background: "#fb923c" }} />
-            <span className="cinzel" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#ea580c" }}>
-              ISKCON Durgapur
-            </span>
+            <span className="cinzel" style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "#ea580c" }}>ISKCON Durgapur</span>
             <div style={{ width: 28, height: 1, background: "#fb923c" }} />
           </motion.div>
 
-          <motion.h1
-            className="cinzel gold-text"
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.25 }}
-            style={{ fontSize: "clamp(32px, 5.5vw, 58px)", fontWeight: 600, lineHeight: 1.05, marginBottom: 12 }}
-          >
+          <motion.h1 className="cinzel gold-text"
+            initial={{ opacity: 0, y: 20 }} animate={isLoaded ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.25 }}
+            style={{ fontSize: "clamp(32px, 5.5vw, 58px)", fontWeight: 600, lineHeight: 1.05, marginBottom: 12 }}>
             Contact Us
           </motion.h1>
 
-          <motion.p
-            className="cinzel"
-            initial={{ opacity: 0 }}
-            animate={isLoaded ? { opacity: 1 } : {}}
-            transition={{ delay: 0.4 }}
-            style={{ color: "#c2410c", fontSize: "clamp(9px, 1.1vw, 11px)", letterSpacing: "0.22em", marginBottom: 20 }}
-          >
+          <motion.p className="cinzel"
+            initial={{ opacity: 0 }} animate={isLoaded ? { opacity: 1 } : {}} transition={{ delay: 0.4 }}
+            style={{ color: "#c2410c", fontSize: "clamp(9px, 1.1vw, 11px)", letterSpacing: "0.22em", marginBottom: 20 }}>
             We would love to hear from you
           </motion.p>
 
@@ -269,33 +228,19 @@ export default function ContactPage() {
             <span style={{ color: "rgba(234,88,12,0.4)", fontSize: 10 }}>✦</span>
           </div>
 
-          <motion.blockquote
-            className="cormorant"
-            initial={{ opacity: 0 }}
-            animate={isLoaded ? { opacity: 1 } : {}}
-            transition={{ delay: 0.55 }}
-            style={{
-              fontSize: "clamp(15px, 1.8vw, 19px)",
-              fontStyle: "italic", color: "#92400e",
-              lineHeight: 1.7, maxWidth: 440, margin: "0 auto 24px",
-            }}
-          >
+          <motion.blockquote className="cormorant"
+            initial={{ opacity: 0 }} animate={isLoaded ? { opacity: 1 } : {}} transition={{ delay: 0.55 }}
+            style={{ fontSize: "clamp(15px, 1.8vw, 19px)", fontStyle: "italic", color: "#92400e", lineHeight: 1.7, maxWidth: 440, margin: "0 auto 24px" }}>
             &ldquo;The temple doors are always open — to the seeker, the curious, and the devoted alike.&rdquo;
           </motion.blockquote>
 
-          {/* Open badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.7 }}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={isLoaded ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.7 }}
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               background: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)",
               padding: "10px 20px", borderRadius: 999,
-              boxShadow: "0 4px 18px rgba(234,88,12,0.12)",
-              border: "1px solid rgba(234,88,12,0.15)",
-            }}
-          >
+              boxShadow: "0 4px 18px rgba(234,88,12,0.12)", border: "1px solid rgba(234,88,12,0.15)",
+            }}>
             <span style={{ width: 8, height: 8, background: "#22c55e", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 0 3px rgba(34,197,94,0.2)" }} />
             <span className="cinzel" style={{ fontSize: 10, letterSpacing: "0.18em", color: "#374151" }}>
               Temple Open Daily · 4:30 AM – 8:30 PM
@@ -304,170 +249,165 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          CONTACT CARDS
-      ══════════════════════════════════════ */}
-      <section style={{ padding: "72px 24px 0", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-          {contactDetails.map(({ icon, label, lines }, i) => (
-            <Reveal key={label} delay={i * 80}>
-              <div className="contact-card">
-                <div style={{ fontSize: 28, marginBottom: 14 }}>{icon}</div>
-                <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 10 }}>{label}</p>
-                {lines.map(line => (
-                  <p key={line} style={{ color: "#78350f", fontSize: 15, lineHeight: 1.75 }}>{line}</p>
-                ))}
+      {/* ══ TWO-BOX CONTACT SECTION ══ */}
+      <section style={{ padding: "72px 24px 80px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: 32,
+          alignItems: "start",
+        }}>
+
+          {/* ── LEFT BOX · Get in Touch ── */}
+          <Reveal delay={0}>
+            <div className="panel" style={{ height: "100%" }}>
+              <p className="section-label">Contact</p>
+              <h2 className="cinzel gold-text" style={{ fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 600, marginBottom: 32, lineHeight: 1.2 }}>
+                Get in Touch
+              </h2>
+
+              {/* Location */}
+              <div className="info-row">
+                <div className="icon-bubble">
+                  <FaMapMarkerAlt />
+                </div>
+                <div>
+                  <p className="cinzel" style={{ color: "#c2410c", fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>
+                    Our Location
+                  </p>
+                  <p style={{ color: "#78350f", fontSize: 15, lineHeight: 1.8 }}>
+                    ISKCON Durgapur<br />
+                    Netaji Subhas Chandra Bose Road, A-Zone,<br />
+                    Durgapur, West Bengal, India 713204
+                  </p>
+                </div>
               </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-          FORM + SCHEDULE
-      ══════════════════════════════════════ */}
-      <section style={{ padding: "72px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48, alignItems: "start" }}>
+              {/* Email */}
+              <div className="info-row">
+                <div className="icon-bubble">
+                  <FaEnvelope />
+                </div>
+                <div>
+                  <p className="cinzel" style={{ color: "#c2410c", fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>
+                    Email
+                  </p>
+                  <p style={{ color: "#78350f", fontSize: 15, lineHeight: 1.8 }}>
+                    info.iskcondurgapur@gmail.com
+                  </p>
+                </div>
+              </div>
 
-          {/* ── Contact Form ── */}
-          <Reveal>
-            <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>Send a Message</p>
-            <h2 className="cinzel" style={{ fontSize: "clamp(22px, 3.5vw, 32px)", fontWeight: 600, lineHeight: 1.2, marginBottom: 28, color: "#3a1a08" }}>
-              Get in <span className="gold-text">Touch</span>
-            </h2>
-
-            {submitted ? (
-              <div style={{
-                textAlign: "center", padding: "52px 28px",
-                background: "rgba(255,255,255,0.75)",
-                border: "1px solid rgba(234,88,12,0.2)", borderRadius: 20,
-                boxShadow: "0 8px 36px rgba(234,88,12,0.1)",
-              }}>
-                <p style={{ fontSize: 42, marginBottom: 16 }}>🙏</p>
-                <p className="cinzel gold-text" style={{ fontSize: 20, marginBottom: 10 }}>Hare Krishna!</p>
-                <p style={{ color: "#78350f", fontSize: 16, lineHeight: 1.75 }}>
-                  Thank you for reaching out. A devotee will get back to you shortly.
+              {/* Connect With Us */}
+              <div style={{ marginTop: 32 }}>
+                <p className="cinzel" style={{ color: "#3a1a08", fontSize: 16, fontWeight: 600, marginBottom: 16, letterSpacing: "0.04em" }}>
+                  Connect With Us
                 </p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
-                    <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 7 }}>NAME *</p>
-                    <input className="form-input" name="name" placeholder="Your name" value={form.name} onChange={handleChange} />
-                  </div>
-                  <div>
-                    <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 7 }}>PHONE</p>
-                    <input className="form-input" name="phone" placeholder="+91 00000 00000" value={form.phone} onChange={handleChange} />
-                  </div>
-                </div>
-
-                <div>
-                  <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 7 }}>EMAIL *</p>
-                  <input className="form-input" name="email" type="email" placeholder="your@email.com" value={form.email} onChange={handleChange} />
-                </div>
-
-                <div>
-                  <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 7 }}>SUBJECT</p>
-                  <select className="form-input" name="subject" value={form.subject} onChange={handleChange}>
-                    <option value="">Select a topic</option>
-                    <option value="visit">Planning a Visit</option>
-                    <option value="seva">Volunteer / Seva</option>
-                    <option value="donation">Donation Enquiry</option>
-                    <option value="event">Event / Programme</option>
-                    <option value="counselling">Spiritual Counselling</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 7 }}>MESSAGE *</p>
-                  <textarea
-                    className="form-input"
-                    name="message"
-                    rows={5}
-                    placeholder="How can we serve you?"
-                    value={form.message}
-                    onChange={handleChange}
-                    style={{ resize: "vertical" }}
-                  />
-                </div>
-
-                <button
-                  className="submit-btn"
-                  onClick={handleSubmit}
-                  disabled={loading || !form.name || !form.email || !form.message}
-                >
-                  {loading ? "Sending…" : "Send Message ✦"}
-                </button>
-
-                <p style={{ color: "rgba(194,65,12,0.5)", fontSize: 12, textAlign: "center", fontStyle: "italic" }}>
-                  * Required fields
-                </p>
-              </div>
-            )}
-          </Reveal>
-
-          {/* ── Right column ── */}
-          <Reveal delay={120}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-
-              {/* Daily Schedule */}
-              <div className="contact-card">
-                <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 18 }}>Daily Temple Programme</p>
-                {scheduleHighlights.map(({ time, name }) => (
-                  <div key={time} className="schedule-row">
-                    <p className="cinzel" style={{ color: "#ea580c", fontSize: 12, letterSpacing: "0.05em" }}>{time}</p>
-                    <p style={{ color: "#78350f", fontSize: 15 }}>{name}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Social */}
-              <div className="contact-card">
-                <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 16 }}>Connect With Us</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {socialLinks.map(({ platform, handle, href, Icon }) => (
-                    <a
-                      key={platform}
-                      href={href}
-                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", padding: "8px 0", borderBottom: "1px solid rgba(234,88,12,0.07)" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <Icon style={{ color: "#ea580c", fontSize: 15, opacity: 0.75 }} />
-                        <p className="cinzel" style={{ color: "#c2410c", fontSize: 10, letterSpacing: "0.12em" }}>{platform}</p>
-                      </div>
-                      <p style={{ color: "#78350f", fontSize: 14 }}>{handle}</p>
-                    </a>
-                  ))}
+                <div style={{ display: "flex", gap: 14 }}>
+                  <a href="#" className="social-btn" style={{ background: "#1877f2" }} aria-label="Facebook">
+                    <FaFacebook />
+                  </a>
+                  <a href="#" className="social-btn" style={{ background: "#ff0000" }} aria-label="YouTube">
+                    <FaYoutube />
+                  </a>
+                  <a href="#" className="social-btn" style={{ background: "#25d366" }} aria-label="WhatsApp">
+                    <FaWhatsapp />
+                  </a>
                 </div>
               </div>
-
-              {/* How to Reach */}
-              <div className="contact-card">
-                <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 16 }}>How to Reach Us</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {[
-                    { mode: "By Auto / Taxi", detail: "Ask for ISKCON Temple, City Centre" },
-                    { mode: "By Bus",         detail: "Durgapur City Centre stop" },
-                    { mode: "By Train",       detail: "Durgapur Station — 3 km away" },
-                  ].map(({ mode, detail }) => (
-                    <div key={mode}>
-                      <p className="cinzel" style={{ color: "#ea580c", fontSize: 11, letterSpacing: "0.08em", marginBottom: 3 }}>{mode}</p>
-                      <p style={{ color: "#78350f", fontSize: 14 }}>{detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
           </Reveal>
+
+          {/* ── RIGHT BOX · Send a Message ── */}
+          <Reveal delay={120}>
+            <div className="panel">
+              <p className="section-label">Reach Out</p>
+              <h2 className="cinzel gold-text" style={{ fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 600, marginBottom: 32, lineHeight: 1.2 }}>
+                Send us a Message
+              </h2>
+
+              {submitted ? (
+                <div style={{
+                  textAlign: "center", padding: "52px 28px",
+                  background: "rgba(255,247,237,0.8)", borderRadius: 16,
+                  border: "1px solid rgba(234,88,12,0.15)",
+                }}>
+                  <p style={{ fontSize: 42, marginBottom: 16 }}>🙏</p>
+                  <p className="cinzel gold-text" style={{ fontSize: 20, marginBottom: 10 }}>Hare Krishna!</p>
+                  <p style={{ color: "#78350f", fontSize: 16, lineHeight: 1.75 }}>
+                    Thank you for reaching out. A devotee will get back to you shortly.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+                  {/* Name + Email row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div>
+                      <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 8 }}>NAME</p>
+                      <input
+                        className="form-input"
+                        name="name"
+                        placeholder="Your Name"
+                        value={form.name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div>
+                      <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 8 }}>EMAIL</p>
+                      <input
+                        className="form-input"
+                        name="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={form.email}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 8 }}>SUBJECT</p>
+                    <input
+                      className="form-input"
+                      name="subject"
+                      placeholder="How can we help?"
+                      value={form.subject}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  {/* Message */}
+                  <div>
+                    <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.2em", marginBottom: 8 }}>MESSAGE</p>
+                    <textarea
+                      className="form-input"
+                      name="message"
+                      rows={6}
+                      placeholder="Write your message here..."
+                      value={form.message}
+                      onChange={handleChange}
+                      style={{ resize: "vertical" }}
+                    />
+                  </div>
+
+                  <button
+                    className="submit-btn"
+                    onClick={handleSubmit}
+                    disabled={isDisabled}
+                  >
+                    {loading ? "Sending…" : "Send Message"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </Reveal>
+
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-          MAP
-      ══════════════════════════════════════ */}
+      {/* ══ MAP ══ */}
       <section style={{ padding: "0 24px 80px", maxWidth: 1100, margin: "0 auto" }}>
         <Reveal>
           <p className="cinzel" style={{ color: "#c2410c", fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12, textAlign: "center" }}>Find Us</p>
@@ -478,17 +418,14 @@ export default function ContactPage() {
             width: "100%", aspectRatio: "16/9",
             background: "rgba(255,255,255,0.6)",
             border: "1px solid rgba(234,88,12,0.15)",
-            borderRadius: 20,
-            overflow: "hidden",
+            borderRadius: 20, overflow: "hidden",
             boxShadow: "0 8px 40px rgba(234,88,12,0.1)",
           }}>
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.902!2d87.3241!3d23.5204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zISKCON+Durgapur!5e0!3m2!1sen!2sin!4v1234567890"
-              width="100%"
-              height="100%"
+              width="100%" height="100%"
               style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
+              allowFullScreen loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="ISKCON Durgapur Location"
             />
@@ -496,23 +433,14 @@ export default function ContactPage() {
         </Reveal>
       </section>
 
-      {/* ══════════════════════════════════════
-          FOOTER BAR (matches HeroSection)
-      ══════════════════════════════════════ */}
+      {/* ══ FOOTER BAR ══ */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center",
-        flexWrap: "wrap", gap: 16,
-        padding: "16px 24px",
+        flexWrap: "wrap", gap: 16, padding: "16px 24px",
         borderTop: "1px solid rgba(234,88,12,0.15)",
         background: "rgba(254,215,170,0.45)",
       }}>
-        {[
-          "Mangal Arati · 4:30 AM",
-          "Hare Krishna Kirtan",
-          "Prasadam Daily",
-          "Bhagavad Gita Classes",
-          "Spiritual Counselling",
-        ].map((text, i) => (
+        {["Mangal Arati · 4:30 AM", "Hare Krishna Kirtan", "Prasadam Daily", "Bhagavad Gita Classes", "Spiritual Counselling"].map((text, i) => (
           <React.Fragment key={text}>
             {i > 0 && <div style={{ width: 1, height: 14, background: "#fb923c", opacity: 0.5 }} />}
             <div className="cinzel" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: "#ea580c" }}>

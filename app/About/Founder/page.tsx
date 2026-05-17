@@ -380,43 +380,7 @@ export default function AboutISKCON() {
       {/* ════════════════════════════
           FOUR PILLARS
       ════════════════════════════ */}
-      <section className="relative z-10" style={{ padding: "90px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <Reveal>
-          <p className="cinzel text-[10px] tracking-[0.32em] uppercase text-orange-500 text-center mb-3">Our Pillars</p>
-          <h2
-            className="cinzel font-semibold text-gray-800 text-center leading-tight mb-3"
-            style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.6rem)" }}
-          >
-            What We <span className="orange-grad">Stand For</span>
-          </h2>
-          <div className="orn-divider mb-14">
-            <div className="w-1.5 h-1.5 rotate-45 bg-orange-500" style={{ opacity: 0.7 }} />
-          </div>
-        </Reveal>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 }}>
-          {pillars.map(({ icon, title, body }, i) => (
-            <Reveal key={title} delay={i * 90}>
-              <div className="pillar-card">
-                <div style={{ fontSize: 32, marginBottom: 16 }}>{icon}</div>
-                <h3
-                  className="cinzel text-orange-600 font-medium mb-3"
-                  style={{ fontSize: 14, letterSpacing: "0.04em" }}
-                >
-                  {title}
-                </h3>
-                <p
-                  className="cormorant text-gray-600"
-                  style={{ fontSize: "clamp(1rem, 1.5vw, 1.08rem)", lineHeight: 1.8 }}
-                >
-                  {body}
-                </p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
+     
       {/* ════════════════════════════
           TIMELINE
       ════════════════════════════ */}
