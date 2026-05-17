@@ -14,13 +14,13 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 overflow-hidden">
+    <section className="relative min-h-screen bg-linear-to-br from-orange-50 via-amber-50 to-orange-100 overflow-hidden">
 
       {/* Background Blobs */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 left-0 w-96 h-96 bg-orange-300 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-300 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-200 rounded-full blur-3xl opacity-50" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150px h-150px bg-yellow-200 rounded-full blur-3xl opacity-50" />
       </div>
 
       {/* Decorative Ping Dots */}
@@ -60,7 +60,7 @@ export default function HeroSection() {
             >
               <span className="text-gray-800">Welcome to</span>
               <br />
-              <span className="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent">
                 ISKCON Durgapur
               </span>
             </motion.h1>
@@ -100,7 +100,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/about"
-                className="group inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 overflow-hidden"
+                className="group inline-flex items-center justify-center gap-2 bg-linear-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 overflow-hidden"
               >
                 Visit Temple
                 <FaArrowRight className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -128,7 +128,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, rotate: -5 }}
               animate={isLoaded ? { opacity: 1, rotate: -6 } : {}}
               transition={{ delay: 0.5 }}
-              className="absolute -top-4 -left-4 w-32 h-40 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl -z-10 shadow-lg"
+              className="absolute -top-4 -left-4 w-32 h-40 bg-linear-to-br from-amber-400 to-orange-500 rounded-2xl -z-10 shadow-lg"
             />
 
             {/* Decorative card – bottom right */}
@@ -136,14 +136,14 @@ export default function HeroSection() {
               initial={{ opacity: 0, rotate: 5 }}
               animate={isLoaded ? { opacity: 1, rotate: 6 } : {}}
               transition={{ delay: 0.7 }}
-              className="absolute -bottom-4 -right-4 w-40 h-32 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl -z-10 shadow-lg"
+              className="absolute -bottom-4 -right-4 w-40 h-32 bg-linear-to-br from-orange-400 to-red-500 rounded-2xl -z-10 shadow-lg"
             />
 
             {/* Main Image */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="relative z-10 h-[400px] sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl"
+              className="relative z-10 h-100px sm:h-125px rounded-3xl overflow-hidden shadow-2xl"
             >
               <Image
                 src="/radhamadanmohan.jpg"
@@ -152,7 +152,7 @@ export default function HeroSection() {
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
 
               {/* Floating Info Card */}
               <motion.div
