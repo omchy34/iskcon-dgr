@@ -25,7 +25,7 @@ const navLinks: NavLink[] = [
     name: "Resources",
     href: "/Resources",
     children: [
-      { name: "Books", href: "/Resources/Books" },
+      { name: "Prabhupad-Books", href: "/Resources/Prabhupad-Books" },
       { name: "Courses", href: "/Resources/Courses" },
     ],
   },
@@ -33,8 +33,8 @@ const navLinks: NavLink[] = [
     name: "Events",
     href: "/Events",
     children: [
-      { name: "Upcoming Festivals", href: "/Events/festivals" },
-      { name: "Kirtan Programs", href: "/Events/kirtan" },
+      { name: "Upcoming Festivals", href: "/Events/Upcomming-Festivals" },
+      { name: "Kirtan Programs", href: "/Events/Kirtan-Programes" },
     ],
   },
   { name: "Contact", href: "/Contact" },
@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center gap-3">
               <div className="relative w-12 h-12 overflow-hidden ">
-                <Image src="/iskcon_logo.png" alt="ISKCON Logo" fill className="object-cover" />
+                <Image src="/iskcon_logo.png" alt="ISKCON Logo" fill sizes="(max-width: 768px) 48px, 64px" className="object-contain" />
               </div>
               <div>
                 <h1
@@ -234,7 +234,7 @@ const Navbar: React.FC = () => {
               style={{ background: "linear-gradient(135deg, #d45f10, #b83010)", boxShadow: "0 4px 18px rgba(180,60,10,0.35)" }}
             >
               <MapPin size={14} />
-              Location
+              Spritual tour
             </button>
 
             {/* ── Mobile Hamburger ── */}
@@ -359,7 +359,7 @@ const Navbar: React.FC = () => {
                 color: "#e8a030", transition: "all 0.2s",
               }}>
                 <MapPin size={14} />
-                Get Directions
+                Spritual Tour
               </button>
             </div>
           </div>
