@@ -1,37 +1,36 @@
+
+//root layout 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cinzel, Poppins } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Keep whatever fonts you had before
+const cinzel = Cinzel({
   subsets: ["latin"],
+  variable: "--font-cinzel",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const poppins = Poppins({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
-  title: "ISKCON DURGAPUR",
-  description: "WELCOME TO ISKCON DURGAPUR",
+  title: "ISKCON Durgapur",
+  description: "ISKCON Durgapur - Hare Krishna Temple",
 };
 
-export default function RootLayout({children, }: Readonly<{ children: React.ReactNode; }>) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-
-    >
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet" />
-      </head>
-      <body className="min-h-full flex flex-col">
-        <Navbar/>
-        {children}</body>
+    <html lang="en" className={`${cinzel.variable} ${poppins.variable}`}>
+      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-poppins)" }}>
+        {children}
+      </body>
     </html>
   );
 }

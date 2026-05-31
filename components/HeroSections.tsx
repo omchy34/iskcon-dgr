@@ -56,7 +56,7 @@ export default function HeroSection() {
               initial={{ opacity: 0 }}
               animate={isLoaded ? { opacity: 1 } : {}}
               transition={{ delay: 0.4 }}
-              className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight"
+              className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-6 leading-tight"
             >
               <span className="text-gray-800">Welcome to</span>
               <br />
@@ -85,7 +85,7 @@ export default function HeroSection() {
               initial={{ opacity: 0 }}
               animate={isLoaded ? { opacity: 1 } : {}}
               transition={{ delay: 0.8 }}
-              className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl"
+              className="text-sm sm:text-lg text-gray-600 mb-8 max-w-xl"
             >
               Experience the divine atmosphere of Krishna Consciousness.
               Join us for daily ārtis, spiritual discourses, and the nectarean prasādam.
@@ -100,7 +100,7 @@ export default function HeroSection() {
             >
               <Link
                 href="/about"
-                className="group inline-flex items-center justify-center gap-2 bg-linear-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 overflow-hidden"
+                className="group inline-flex items-center justify-center gap-2 bg-linear-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-2xl font-semibold text-sm shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 overflow-hidden"
               >
                 Visit Temple
                 <FaArrowRight className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -108,7 +108,7 @@ export default function HeroSection() {
 
               <Link
                 href="/donate"
-                className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-2xl font-semibold text-lg shadow-xl hover:shadow-2xl border-2 border-orange-200 hover:border-orange-400 transition-all duration-300"
+                className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-2xl font-semibold text-sm shadow-xl hover:shadow-2xl border-2 border-orange-200 hover:border-orange-400 transition-all duration-300"
               >
                 <FaPrayingHands />
                 Support Seva
@@ -143,12 +143,13 @@ export default function HeroSection() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="relative z-10 h-100px sm:h-125px rounded-3xl overflow-hidden shadow-2xl"
+              className="relative z-10 h-125 sm:h-100 rounded-3xl overflow-hidden shadow-2xl"
             >
               <Image
                 src="/radhamadanmohan.jpg"
                 alt="Sri Sri Radha Madanmohan – ISKCON Durgapur"
                 fill
+                sizes="(max-width: 768px)"
                 className="object-cover"
                 priority
               />

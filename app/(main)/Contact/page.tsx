@@ -73,11 +73,7 @@ export default function ContactPage() {
       minHeight: "100vh",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
-
-        .cinzel    { font-family: 'Cinzel', serif; }
-        .cormorant { font-family: 'Cormorant Garamond', serif; }
-
+       
         .gold-text {
           background: linear-gradient(135deg, #ea580c 0%, #d97706 50%, #ea580c 100%);
           -webkit-background-clip: text;

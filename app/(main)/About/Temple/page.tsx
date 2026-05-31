@@ -116,11 +116,8 @@ export default function AboutISKCONDurgapur() {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Cinzel:wght@400;500;600&display=swap');
-
-        .cinzel    { font-family: 'Cinzel', serif; }
-        .cormorant { font-family: 'Cormorant Garamond', serif; }
-
+        
+      
         .orange-grad {
           background: linear-gradient(135deg, #ea580c, #f59e0b);
           -webkit-background-clip: text;
@@ -289,8 +286,11 @@ export default function AboutISKCONDurgapur() {
                 <Image
                   src="/radhamadanmohan.jpg"
                   alt="Śrī Śrī Rādhā Madana Mohana"
+                  sizes="(max-width: 768px)"
                   fill
                   style={{ objectFit: "cover", objectPosition: "top" }}
+                  priority
+                  loading="eager"
                 />
                 {/* Bottom gradient */}
                 <div
